@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Auto Commit on Task Completion",
+  "description": "Monitors task files for completion status. When the last required task in a spec's task file is marked as done, automatically generates a detailed commit message, commits the changes, and pushes to remote then syncs.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/.kiro/**/tasks.md",
+      "**/.kiro/**/tasks.txt",
+      "**/tasks.md",
+      "**/tasks.txt"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The task file has been updated. Analyze the task file to determine if all required tasks are now marked as complete. If this is the last required task being completed:\n\n1. Review all changes made in the working directory using git status and git diff\n2. Generate a detailed, professional commit message that:\n   - Summarizes the work completed across all tasks\n   - Follows conventional commit format if applicable\n   - Includes specific details about what was implemented, fixed, or changed\n   - References the spec or task file if relevant\n3. Stage all changes with git add\n4. Commit with the generated message\n5. Push to the remote repository\n6. Sync to ensure everything is up to date\n\nIf not all required tasks are complete yet, do nothing and wait for the next task completion."
+  }
+}

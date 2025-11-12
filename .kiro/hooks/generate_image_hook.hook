@@ -1,0 +1,44 @@
+{
+  "name": "Generate Pro Image",
+  "description": "Runs the Gemini->Bria agentic chain to generate a new, styled image.",
+  "trigger": "manual",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "user_prompt": {
+        "type": "string",
+        "description": "The main subject (e.g., 'a smartphone', 'a pair of sneakers')."
+      },
+      "preset_name": {
+        "type": "string",
+        "description": "Which style preset to use?",
+        "enum": [
+          "preset_bright_clean.json",
+          "preset_hero_shot.json",
+          "preset_flat_lay.json",
+          "preset_natural_warm.json",
+          "preset_detail_macro.json"
+        ]
+      },
+      "reference_image_path": {
+        "type": "string",
+        "description": "(Optional) Path to a reference image for inspiration (e.g., 'inputs/product_image.png')."
+      }
+    },
+    "required": [
+      "user_prompt",
+      "preset_name"
+    ]
+  },
+  "steps": [
+    {
+      "name": "Call Product Shot Agent",
+      "tool": "@product-shot-agent.generate_styled_image",
+      "inputs": {
+        "user_prompt": "${{ inputs.user_prompt }}",
+        "preset_name": "${{ inputs.preset_name }}",
+        "reference_image_path": "${{ inputs.reference_image_path }}"
+      }
+    }
+  ]
+}

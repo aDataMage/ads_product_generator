@@ -1,4 +1,7 @@
-"""Project Prodigy: Agentic Chain Script (Bria -> Gemini -> Bria)"""
+"""
+Project Prodigy: 2-Call "Smart Prompt Engineer" Workflow
+(Gemini -> Bria)
+"""
 import requests
 import json
 import base64
@@ -7,8 +10,13 @@ import os
 import google.generativeai as genai
 from config import BRIA_API_KEY
 
-# --- 1. CONFIGURATION ---
+# --- 0. USER-CONFIGURABLE INPUTS ---
+# This is what our UI will eventually control
+USER_PROMPT = "a new, unbranded smartphone in a box"
+REFERENCE_IMAGE_PATH = "inputs/product_image.png"  # Set to None to test text-only
+PRESET_FILE = "presets/preset_bright_clean.json"
 
+# --- 1. CONFIGURATION ---
 # Configure Bria
 BRIA_API_ENDPOINT = "https://engine.prod.bria-api.com/v2/image/generate"
 BRIA_HEADERS = {
@@ -17,23 +25,31 @@ BRIA_HEADERS = {
 }
 
 # Configure Gemini
-gemini_key = os.environ.get("GOOGLE_API_KEY")
-if not gemini_key:
-    print("--- ERROR ---")
-    print("GOOGLE_API_KEY environment variable not set.")
-    print("Please follow the setup instructions at https://ai.google.dev/gemini-api/docs/api-key#windows")
+try:
+    gemini_key = os.environ.get("GOOGLE_API_KEY")
+    if not gemini_key:
+        raise ValueError("GOOGLE_API_KEY environment variable not set.")
+    genai.configure(api_key=gemini_key)
+    gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+except Exception as e:
+    print(f"--- FATAL: GEMINI CONFIG ERROR ---")
+    print(f"Error: {e}")
+    print("Please check your GOOGLE_API_KEY setup.")
     exit()
-genai.configure(api_key=gemini_key)
-gemini_model = genai.GenerativeModel('gemini-2.5-flash')
 
 # --- 2. HELPER FUNCTIONS ---
 
 
 def encode_image(image_path):
     """Encode image to base64 string."""
-    with open(image_path, 'rb') as image_file:
-        base64_string = base64.b64encode(image_file.read()).decode('utf-8')
-    return base64_string
+    try:
+        with open(image_path, 'rb') as image_file:
+            base64_string = base64.b64encode(image_file.read()).decode('utf-8')
+        return base64_string
+    except FileNotFoundError:
+        print(
+            f"Warning: Reference image not found at {image_path}. Proceeding without it.")
+        return None
 
 
 def download_image(url, save_path):
@@ -49,10 +65,10 @@ def download_image(url, save_path):
 
 
 def clean_json_response(text):
-    """Cleans the markdown json ... from Gemini's response."""
+    """Cleans the markdown json ...  from Gemini's response."""
     if text.strip().startswith("```json"):
         text = text.strip()[7:-3]
-    return text
+    return text.strip()
 
 
 def poll_for_result(status_url):
@@ -61,7 +77,6 @@ def poll_for_result(status_url):
         try:
             status_response = requests.get(status_url, headers=BRIA_HEADERS)
             status_data = status_response.json()
-
             if status_data['status'] == "COMPLETED":
                 print("...Generation complete.")
                 return status_data['result']
@@ -73,136 +88,84 @@ def poll_for_result(status_url):
                 print(
                     f"...Status: {status_data['status']}. Checking again in 5s.")
                 time.sleep(5)
-
         except requests.exceptions.RequestException as e:
             print(f"...Polling error: {e}. Retrying...")
             time.sleep(5)
 
+
 # --- 3. MAIN EXECUTION ---
-
-
 if __name__ == "__main__":
-
-    # --- CALL 1: BRIA (Context Call) ---
-    print("--- 1. BRIA CONTEXT CALL ---")
-
-    # 1a. Load Inputs
-    with open('presets/preset_editorial_dark.json', 'r') as f:
-        preset_data = json.load(f)
-
-    initial_prompt = preset_data.get(
-        'short_description', 'A professional product shot')
-    base64_image_string = encode_image('inputs/product_image.png')
-
-    # 1b. Build Payload
-    payload_1 = {
-        "images": [base64_image_string],
-        "prompt": initial_prompt
-    }
-
-    # 1c. Submit and Poll
+    # --- CALL 1: GEMINI (The "Translator") ---
+    print("--- 1. GEMINI TRANSLATOR CALL ---")
+    master_prompt_string = ""
     try:
-        print("Submitting initial job to Bria...")
-        response_1 = requests.post(
-            BRIA_API_ENDPOINT, json=payload_1, headers=BRIA_HEADERS)
-
-        if response_1.status_code != 202:
-            print(
-                f"Bria Call 1 Failed! Status: {response_1.status_code}, {response_1.text}")
-            exit()
-
-        response_data_1 = response_1.json()
-        print(
-            f"Bria Call 1 Accepted. Request ID: {response_data_1['request_id']}")
-
-        result_1 = poll_for_result(response_data_1['status_url'])
-
-        print(f"Downloading initial image from Call 1...")
-        download_image(result_1['image_url'], 'outputs/1_initial_image.jpg')
-
-        if not result_1:
-            print("Bria Call 1 failed to generate. Exiting.")
-            exit()
-
-        seed = result_1['seed']
-        context_json_string = result_1['structured_prompt']
-        print(f"Got Bria context. Seed: {seed}")
-
-        print("Saving Bria's returned 'context' JSON...")
-        with open('outputs/2_bria_context.json', 'w') as f:
-            json.dump(json.loads(context_json_string), f, indent=2)
-
-    except requests.exceptions.RequestException as e:
-        print(f"Bria Call 1 Connection Error: {e}")
-        exit()
-
-    # --- CALL 2: GEMINI (Smart Merge) ---
-    print("\n--- 2. GEMINI MERGE CALL ---")
-
-    try:
-        # 2a. Load Prompts
+        # 1a. Load all prompt components
         with open('merger_prompt.txt', 'r') as f:
             merger_prompt_template = f.read()
+        with open(PRESET_FILE, 'r') as f:
+            style_json_string = json.dumps(json.load(f))
 
-        # 2b. Inject our two JSONs into the prompt template
+        # 1b. Inject components into the master prompt
         final_merger_prompt = merger_prompt_template.replace(
-            "[CONTEXT_JSON]", context_json_string)
+            "[USER_PROMPT]", USER_PROMPT)
         final_merger_prompt = final_merger_prompt.replace(
-            "[STYLE_JSON]", json.dumps(preset_data))
+            "[STYLE_JSON]", style_json_string)
 
-        # 2c. Call Gemini
-        print("Sending JSONs to Gemini for smart merge...")
+        # 1c. Call Gemini
+        print("Sending user prompt and style JSON to Gemini...")
         gemini_response = gemini_model.generate_content(final_merger_prompt)
-        merged_json_string = clean_json_response(gemini_response.text)
-        print("Gemini merge complete.")
+        master_prompt_string = clean_json_response(gemini_response.text)
+        print(
+            f"Gemini created new Master Prompt: \"{master_prompt_string[:75]}...\"")
 
-        # Verify the merge
-        # This will raise an error if Gemini returned bad JSON
-        json.loads(merged_json_string)
-
-        print("Saving Gemini's 'merged' JSON...")
-        with open('outputs/3_gemini_merged.json', 'w') as f:
-            json.dump(json.loads(merged_json_string), f, indent=2)
-
+        # Save the master prompt for debugging
+        with open('outputs/master_prompt.txt', 'w') as f:
+            f.write(master_prompt_string)
     except Exception as e:
-        print(f"Gemini Call 2 Failed. The raw error was: {e}")
+        print(f"Gemini Call 1 Failed. The raw error was: {e}")
         exit()
 
-    # --- CALL 3: BRIA (Refinement Call) ---
-    print("\n--- 3. BRIA REFINEMENT CALL ---")
-
+    # --- CALL 2: BRIA (The "Image Engine") ---
+    print("\n--- 2. BRIA IMAGE ENGINE CALL ---")
     try:
-        # 3a. Build Payload
-        payload_3 = {
-            "structured_prompt": merged_json_string,
-            "seed": seed,
-            "prompt": "Refine image using the provided structured prompt."
+        # 2a. Build the Bria payload
+        payload = {
+            "prompt": master_prompt_string
         }
 
-        # 3b. Submit and Poll
-        print("Submitting refinement job to Bria...")
-        response_3 = requests.post(
-            BRIA_API_ENDPOINT, json=payload_3, headers=BRIA_HEADERS)
+        # 2b. **CRITICAL LOGIC**: Add image *only if* it exists
+        if REFERENCE_IMAGE_PATH:
+            print("...Reference image found. Encoding and adding to payload.")
+            base64_image_string = encode_image(REFERENCE_IMAGE_PATH)
+            if base64_image_string:
+                payload["images"] = [base64_image_string]
+        else:
+            print("...No reference image. Proceeding with text-to-image.")
 
-        if response_3.status_code != 202:
+        # 2c. Submit and Poll
+        print("Submitting final job to Bria...")
+        response = requests.post(
+            BRIA_API_ENDPOINT, json=payload, headers=BRIA_HEADERS)
+        if response.status_code != 202:
+            print(f"--- BRIA ERROR ---")
             print(
-                f"Bria Call 3 Failed! Status: {response_3.status_code}, {response_3.text}")
+                f"API request failed with status code: {response.status_code}")
+            print(f"Response from server: {response.text}")
             exit()
 
-        response_data_3 = response_3.json()
-        print(
-            f"Bria Call 3 Accepted. Request ID: {response_data_3['request_id']}")
+        print("Job accepted by Bria API.")
+        response_data = response.json()
+        print(f"Request ID: {response_data['request_id']}")
+        result = poll_for_result(response_data['status_url'])
 
-        result_3 = poll_for_result(response_data_3['status_url'])
-
-        # 3c. Save Final Image
-        if result_3:
-            final_image_url = result_3['image_url']
-            download_image(final_image_url, 'outputs/4_final_image.jpg')
+        # 2d. Save Final Image
+        if result:
+            final_image_url = result['image_url']
+            download_image(final_image_url, 'outputs/final_image.jpg')
             print("\n--- PROJECT SUCCESS! ---")
             print("Agentic chain complete. Final image saved.")
         else:
-            print("Bria Call 3 failed to generate a final image.")
-
+            print("\n--- PROJECT FAILED ---")
+            print("Bria job failed to generate a final image.")
     except requests.exceptions.RequestException as e:
-        print(f"Bria Call 3 Connection Error: {e}")
+        print(f"Bria Call 2 Connection Error: {e}")

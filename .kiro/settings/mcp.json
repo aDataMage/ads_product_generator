@@ -1,0 +1,40 @@
+{
+    "mcpServers": {
+        "product-shot-agent": {
+            "command": "C:/Users/PC/Downloads/ads_product_generator/.venv/Scripts/python.exe",
+            "args": [
+                "mcp_server.py"
+            ],
+            "cwd": "C:/Users/PC/Downloads/ads_product_generator",
+            "env": {
+                "GOOGLE_API_KEY": "AIzaSyA4SC2w7VAq7BDHqdmzp5U7jJaXUmZwM_A"
+            },
+            "tools": {
+                "generate_styled_image": {
+                    "description": "Runs the 2-call (Gemini -> Bria) chain to generate a new, styled image.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_prompt": {
+                                "type": "string",
+                                "description": "The user's simple text prompt (e.g., 'a smartphone')."
+                            },
+                            "preset_name": {
+                                "type": "string",
+                                "description": "The filename of the preset to use (e.g., 'preset_bright_clean.json')."
+                            },
+                            "reference_image_path": {
+                                "type": "string",
+                                "description": "(Optional) The file path to a reference image."
+                            }
+                        },
+                        "required": [
+                            "user_prompt",
+                            "preset_name"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

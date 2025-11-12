@@ -1,0 +1,52 @@
+{
+  "name": "Minimalist Shadow",
+  "description": "Minimalist photography with artistic shadow play",
+  "settings": {
+    "brightness": 1.2,
+    "contrast": 1.2,
+    "saturation": 0.8,
+    "sharpness": 1.1,
+    "background": "white",
+    "shadow": "artistic",
+    "highlight": "soft"
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only add artistic shadow patterns on a clean white background. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only add shadow patterns and modify the environment around the unchanged product.",
+  "artistic_style": "minimalist",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, with artistic shadow patterns",
+      "location": "center or slightly off-center",
+      "orientation": "naturally positioned with shadow interaction",
+      "relationship": "Primary subject with artistic shadow as secondary design element",
+      "relative_size": "medium to large within frame with negative space",
+      "shape_and_color": "Muted, natural colors with subtle desaturation",
+      "texture": "Clean, refined surface with soft shadow interplay",
+      "appearance_details": "Minimalist presentation with artistic shadows (window blinds, leaves, geometric patterns) adding visual interest"
+    }
+  ],
+  "background_setting": "Clean white or off-white background with artistic shadow patterns creating visual interest and depth",
+  "lighting": {
+    "conditions": "natural window lighting with shadow patterns",
+    "direction": "side lighting creating artistic shadows (venetian blinds, plants, geometric shapes)",
+    "shadows": "artistic, patterned shadows adding design element without overwhelming product",
+    "quality": "soft natural light with defined shadow patterns"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "slightly high angle or eye level, clean perspective",
+    "depth_of_field": "moderate to deep, product and shadows in focus",
+    "focus": "sharp focus on product with visible shadow details",
+    "lens_focal_length": "standard lens (50mm)"
+  },
+  "aesthetics": {
+    "composition": "minimalist, asymmetric with negative space and shadow as design element",
+    "color_scheme": "muted, desaturated palette with white background and subtle shadows",
+    "color_temperature": "neutral to slightly warm",
+    "color_saturation": "muted, understated",
+    "mood_atmosphere": "minimalist, artistic, serene, sophisticated, contemporary",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Contemporary minimalist product photography for lifestyle brands, social media, and modern e-commerce with artistic sensibility"
+}

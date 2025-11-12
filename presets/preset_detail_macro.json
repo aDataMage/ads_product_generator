@@ -1,0 +1,53 @@
+{
+  "name": "Detail Macro",
+  "description": "Close-up macro photography with enhanced details",
+  "settings": {
+    "brightness": 1.0,
+    "contrast": 1.4,
+    "saturation": 1.0,
+    "sharpness": 1.8,
+    "background": "blurred",
+    "shadow": "deep",
+    "highlight": "detailed",
+    "clarity": 1.5
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the camera perspective to extreme close-up macro view, background to softly blurred, and lighting to focused directional lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, lighting, camera perspective) around the unchanged product.",
+  "artistic_style": "hyperrealistic",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, shown in extreme close-up revealing intricate details",
+      "location": "center",
+      "orientation": "angled to showcase texture and craftsmanship details",
+      "relationship": "Primary subject filling frame with intimate detail, overwhelming presence",
+      "relative_size": "very large within frame, macro perspective",
+      "shape_and_color": "Natural colors with high contrast and exceptional clarity",
+      "texture": "Highly detailed, textured surface with visible fine details, pores, weave, or material structure",
+      "appearance_details": "Exceptional sharpness revealing intricate craftsmanship, material quality, stitching, grain, or surface characteristics"
+    }
+  ],
+  "background_setting": "Softly blurred background (bokeh) to emphasize product details and create depth separation",
+  "lighting": {
+    "conditions": "focused directional lighting",
+    "direction": "angled light from 30-45 degrees to enhance texture, dimension, and surface details",
+    "shadows": "deep, intentional shadows creating dramatic depth, contrast, and three-dimensionality",
+    "quality": "controlled, focused light emphasizing texture"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "extreme close-up macro perspective, intimate viewpoint",
+    "depth_of_field": "very shallow, razor-thin focus plane with beautiful bokeh",
+    "focus": "extreme sharpness on specific product detail or texture area",
+    "lens_focal_length": "macro lens (100mm macro or specialized macro lens)"
+  },
+  "aesthetics": {
+    "composition": "tight, intimate macro framing with detail as focal point",
+    "color_scheme": "natural colors with high contrast and rich tonal range",
+    "color_temperature": "neutral, accurate color reproduction",
+    "color_saturation": "natural, emphasizing texture over color",
+    "mood_atmosphere": "detailed, intimate, quality-focused, craftsmanship-oriented, luxurious",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Detail-focused product photography for highlighting craftsmanship, quality, and material excellence in luxury and premium products"
+}

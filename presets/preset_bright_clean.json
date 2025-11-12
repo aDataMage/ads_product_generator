@@ -1,0 +1,51 @@
+{
+  "name": "Bright Clean",
+  "settings": {
+    "brightness": 1.4,
+    "contrast": 1.1,
+    "saturation": 0.9,
+    "sharpness": 1.2,
+    "background": "white",
+    "shadow": "minimal",
+    "highlight": "bright"
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the background to a seamless pure white studio background and adjust the lighting to bright, even studio lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, lighting, shadows) around the unchanged product.",
+  "artistic_style": "realistic",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, centered in frame with optimal lighting",
+      "location": "center",
+      "orientation": "facing forward, slightly angled for dimension",
+      "relationship": "Primary subject, prominently displayed",
+      "relative_size": "large within frame",
+      "shape_and_color": "Natural product colors with accurate color reproduction",
+      "texture": "Clean, well-defined surfaces with visible material quality",
+      "appearance_details": "Sharp details with high clarity, minimal shadows, brand new appearance"
+    }
+  ],
+  "background_setting": "Seamless pure white studio background, providing clean and uncluttered environment that highlights the product",
+  "lighting": {
+    "conditions": "bright studio lighting",
+    "direction": "even, diffused lighting from multiple sources",
+    "shadows": "soft, subtle shadows directly beneath product, indicating depth without distraction",
+    "quality": "diffused, professional studio setup"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "slightly high angle, looking down at product",
+    "depth_of_field": "moderate, product in sharp focus with minimal background blur",
+    "focus": "sharp focus on subject",
+    "lens_focal_length": "standard lens (50mm)"
+  },
+  "aesthetics": {
+    "composition": "centered, product shot",
+    "color_scheme": "predominantly white background with natural product colors, creating clean and high-contrast look",
+    "color_temperature": "neutral to slightly cool",
+    "color_saturation": "natural, accurate color reproduction",
+    "mood_atmosphere": "clean, professional, modern, fresh",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Professional product photograph intended for e-commerce websites, catalogs, or advertising materials, emphasizing clarity and product detail"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Lifestyle Context",
+  "description": "Product in authentic lifestyle setting with environmental context",
+  "settings": {
+    "brightness": 1.1,
+    "contrast": 1.0,
+    "saturation": 1.2,
+    "sharpness": 1.0,
+    "background": "lifestyle",
+    "shadow": "natural",
+    "highlight": "soft"
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the background to an authentic lifestyle environment with complementary props and adjust lighting to soft natural lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, props, lighting) around the unchanged product.",
+  "artistic_style": "realistic",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, placed in authentic lifestyle environment",
+      "location": "center or rule-of-thirds placement",
+      "orientation": "naturally positioned as if in real-life use",
+      "relationship": "Primary subject with complementary lifestyle props and environmental context",
+      "relative_size": "medium to large within frame with contextual elements",
+      "shape_and_color": "Natural product colors in harmonious lifestyle palette",
+      "texture": "Natural surface characteristics with environmental interaction",
+      "appearance_details": "Authentic lifestyle presentation with natural styling, complementary props, and real-world context"
+    }
+  ],
+  "background_setting": "Authentic lifestyle environment (kitchen counter, desk, outdoor setting, living space) with natural materials, complementary props, and environmental storytelling",
+  "lighting": {
+    "conditions": "soft natural lighting",
+    "direction": "window light or natural outdoor lighting from side or above",
+    "shadows": "natural, soft shadows adding authenticity and depth",
+    "quality": "diffused natural light creating warm, inviting atmosphere"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "eye level or slightly above, natural perspective",
+    "depth_of_field": "moderate, product in focus with softly blurred lifestyle background",
+    "focus": "sharp focus on product with natural environmental context",
+    "lens_focal_length": "standard to portrait lens (50-85mm)"
+  },
+  "aesthetics": {
+    "composition": "natural, lifestyle-oriented with rule of thirds and environmental storytelling",
+    "color_scheme": "harmonious lifestyle palette with natural, complementary colors",
+    "color_temperature": "warm, inviting",
+    "color_saturation": "natural to slightly enhanced",
+    "mood_atmosphere": "authentic, relatable, aspirational, warm, inviting, lifestyle-oriented",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Lifestyle product photography for social media, brand storytelling, and authentic marketing showing product in real-world context"
+}

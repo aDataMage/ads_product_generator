@@ -1,0 +1,52 @@
+{
+  "name": "Editorial Dark",
+  "description": "Moody editorial photography with dramatic dark tones",
+  "settings": {
+    "brightness": 0.8,
+    "contrast": 1.6,
+    "saturation": 0.9,
+    "sharpness": 1.3,
+    "background": "dark",
+    "shadow": "dramatic",
+    "highlight": "selective"
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the background to dark, moody tones and adjust lighting to dramatic low-key lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, lighting, shadows) around the unchanged product.",
+  "artistic_style": "editorial",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, dramatically lit against dark background",
+      "location": "center",
+      "orientation": "artfully positioned with dramatic angle",
+      "relationship": "Primary subject emerging from darkness with selective illumination",
+      "relative_size": "large within frame",
+      "shape_and_color": "Muted, sophisticated colors with rich shadows and selective highlights",
+      "texture": "Dramatic surface details revealed through selective lighting",
+      "appearance_details": "Moody presentation with deep shadows, selective highlights creating mystery and sophistication"
+    }
+  ],
+  "background_setting": "Dark, moody background (black, deep charcoal, or dark navy) creating dramatic atmosphere and editorial sophistication",
+  "lighting": {
+    "conditions": "dramatic low-key lighting",
+    "direction": "single directional light from side or above, creating strong contrast",
+    "shadows": "deep, dramatic shadows with high contrast and mystery",
+    "quality": "hard, focused light creating chiaroscuro effect"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "eye level or slightly low angle for dramatic perspective",
+    "depth_of_field": "moderate, product in sharp focus with dark background",
+    "focus": "sharp focus on product with dramatic falloff",
+    "lens_focal_length": "portrait lens (85mm) for editorial feel"
+  },
+  "aesthetics": {
+    "composition": "asymmetric, editorial composition with negative space and drama",
+    "color_scheme": "dark, moody palette with muted colors and selective highlights",
+    "color_temperature": "cool to neutral",
+    "color_saturation": "muted, sophisticated",
+    "mood_atmosphere": "moody, dramatic, mysterious, sophisticated, editorial, luxurious",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Editorial and luxury product photography for high-end magazines, fashion brands, and premium advertising campaigns"
+}

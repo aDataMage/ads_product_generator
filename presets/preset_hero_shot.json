@@ -1,0 +1,52 @@
+{
+  "name": "Hero Shot",
+  "description": "Professional hero shot with dramatic lighting",
+  "settings": {
+    "brightness": 1.2,
+    "contrast": 1.3,
+    "saturation": 1.1,
+    "sharpness": 1.4,
+    "background": "gradient",
+    "shadow": "soft",
+    "highlight": "enhanced"
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the background to an elegant gradient and adjust lighting to dramatic studio lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, lighting, shadows) around the unchanged product.",
+  "artistic_style": "realistic",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, prominently featured as the hero",
+      "location": "center",
+      "orientation": "dynamic angle showcasing best features, slightly elevated perspective",
+      "relationship": "Primary focal point, dominating the frame with commanding presence",
+      "relative_size": "large within frame, filling composition boldly",
+      "shape_and_color": "Rich, saturated colors with enhanced contrast and depth",
+      "texture": "Enhanced details with rich surface characteristics, premium feel",
+      "appearance_details": "Bold presentation with enhanced highlights and dimensional shadows, premium quality appearance"
+    }
+  ],
+  "background_setting": "Elegant gradient background (dark to light or complementary colors) creating depth, visual interest, and premium atmosphere",
+  "lighting": {
+    "conditions": "dramatic studio lighting",
+    "direction": "directional light from 45-degree angle above and side, creating dimension and drama",
+    "shadows": "soft, intentional shadows adding depth and three-dimensionality",
+    "quality": "controlled studio lighting with key light and fill light setup"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "slightly low angle, looking up at product for heroic perspective",
+    "depth_of_field": "moderate, product in sharp focus with gradient background",
+    "focus": "tack-sharp focus on product with enhanced detail",
+    "lens_focal_length": "portrait lens (85mm) for flattering perspective"
+  },
+  "aesthetics": {
+    "composition": "bold, centered composition with strong visual hierarchy and dynamic presence",
+    "color_scheme": "rich, saturated colors with complementary gradient background, high impact",
+    "color_temperature": "neutral to slightly warm",
+    "color_saturation": "enhanced, premium feel",
+    "mood_atmosphere": "dramatic, premium, impactful, aspirational, powerful",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Premium product photography for marketing campaigns, hero banners, and high-impact advertising materials"
+}

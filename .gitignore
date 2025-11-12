@@ -1,0 +1,6 @@
+# Ignore our secret API key
+config.py
+__pycache__/
+*.pyc
+inputs/
+outputs/

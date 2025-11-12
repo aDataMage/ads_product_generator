@@ -1,0 +1,52 @@
+{
+  "name": "Flat Lay",
+  "description": "Top-down flat lay photography style",
+  "settings": {
+    "brightness": 1.3,
+    "contrast": 1.0,
+    "saturation": 1.2,
+    "sharpness": 1.1,
+    "background": "neutral",
+    "shadow": "none",
+    "highlight": "even"
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the camera angle to top-down view, background to neutral clean surface, and lighting to bright overhead lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, lighting, camera angle) around the unchanged product.",
+  "artistic_style": "realistic",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, arranged in flat lay composition",
+      "location": "center",
+      "orientation": "flat, viewed from directly above, perfectly aligned",
+      "relationship": "Primary subject in top-down arrangement, symmetrically placed",
+      "relative_size": "large within frame",
+      "shape_and_color": "Vibrant, saturated product colors on neutral background",
+      "texture": "Clear, evenly-lit surface details with no shadow interference",
+      "appearance_details": "Flat, organized presentation with no shadows, clean and modern aesthetic"
+    }
+  ],
+  "background_setting": "Neutral, clean surface (white, beige, or pastel) with no shadows for a minimalist, Instagram-ready look",
+  "lighting": {
+    "conditions": "bright, even overhead lighting",
+    "direction": "directly from above, perpendicular to surface, eliminating all shadows",
+    "shadows": "none, completely flat lighting for clean aesthetic",
+    "quality": "diffused overhead light, perfectly even"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "directly overhead, 90-degree top-down view",
+    "depth_of_field": "deep, entire product in sharp focus",
+    "focus": "sharp focus across entire frame",
+    "lens_focal_length": "standard lens (50mm) or wide angle (35mm)"
+  },
+  "aesthetics": {
+    "composition": "top-down, centered flat lay arrangement with geometric precision",
+    "color_scheme": "vibrant, saturated colors on neutral background, high contrast",
+    "color_temperature": "neutral to slightly cool",
+    "color_saturation": "enhanced, Instagram-worthy vibrancy",
+    "mood_atmosphere": "modern, clean, lifestyle-oriented, social media ready",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Social media and lifestyle product photography with flat lay composition, ideal for Instagram, Pinterest, and lifestyle brands"
+}

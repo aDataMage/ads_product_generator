@@ -1,0 +1,52 @@
+{
+  "name": "Vibrant Pop",
+  "description": "Bold, vibrant photography with saturated colors and high energy",
+  "settings": {
+    "brightness": 1.3,
+    "contrast": 1.2,
+    "saturation": 1.6,
+    "sharpness": 1.3,
+    "background": "colorful",
+    "shadow": "minimal",
+    "highlight": "bright"
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the background to a vibrant, solid color and adjust lighting to bright, even studio lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, lighting) around the unchanged product.",
+  "artistic_style": "realistic",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, with vibrant color enhancement",
+      "location": "center",
+      "orientation": "dynamic, energetic positioning",
+      "relationship": "Primary subject with bold color contrast against vibrant background",
+      "relative_size": "large within frame",
+      "shape_and_color": "Highly saturated, vibrant colors with bold contrast and energy",
+      "texture": "Clean, vibrant surface with enhanced color and clarity",
+      "appearance_details": "Bold, energetic presentation with maximum color saturation and high-impact visual appeal"
+    }
+  ],
+  "background_setting": "Vibrant, solid color background (bright blue, pink, yellow, or complementary color) creating bold contrast and energetic atmosphere",
+  "lighting": {
+    "conditions": "bright, even studio lighting",
+    "direction": "even lighting from multiple angles maximizing color saturation",
+    "shadows": "minimal, soft shadows maintaining vibrant aesthetic",
+    "quality": "bright, diffused light enhancing color vibrancy"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "eye level or slightly high angle, straightforward perspective",
+    "depth_of_field": "moderate, product in sharp focus with solid color background",
+    "focus": "sharp focus on product with maximum clarity",
+    "lens_focal_length": "standard lens (50mm)"
+  },
+  "aesthetics": {
+    "composition": "centered, bold composition with strong color contrast",
+    "color_scheme": "highly saturated, complementary or contrasting colors, maximum vibrancy",
+    "color_temperature": "neutral to slightly warm",
+    "color_saturation": "maximum, bold and energetic",
+    "mood_atmosphere": "energetic, bold, playful, youthful, attention-grabbing, fun",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Bold product photography for youth brands, social media advertising, and high-energy marketing campaigns requiring maximum visual impact"
+}

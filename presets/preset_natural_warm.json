@@ -1,0 +1,53 @@
+{
+  "name": "Natural Warm",
+  "description": "Natural lighting with warm tones",
+  "settings": {
+    "brightness": 1.1,
+    "contrast": 1.0,
+    "saturation": 1.3,
+    "sharpness": 1.0,
+    "background": "natural",
+    "shadow": "soft",
+    "highlight": "warm",
+    "temperature": 1.2
+  },
+  "short_description": "Keep the exact product from the input image completely unchanged - preserve its colors, shape, texture, and all visual characteristics. Only change the background to natural, organic materials with warm tones and adjust lighting to soft, warm natural lighting. The product itself must remain identical to the input.",
+  "product_preservation_instruction": "CRITICAL: The product must remain visually identical to the input image. Do not alter, reinterpret, or regenerate the product. Only modify the environment (background, lighting, shadows) around the unchanged product.",
+  "artistic_style": "realistic",
+  "style_medium": "photograph",
+  "objects": [
+    {
+      "description": "The exact product from the input image, preserved as-is, in natural setting",
+      "location": "center",
+      "orientation": "naturally positioned, casual arrangement",
+      "relationship": "Primary subject in natural lifestyle context",
+      "relative_size": "large within frame",
+      "shape_and_color": "Natural product colors enhanced with warm tones",
+      "texture": "Natural, organic surface characteristics with visible texture",
+      "appearance_details": "Warm tones with soft, natural lighting and gentle shadows, authentic lifestyle feel"
+    }
+  ],
+  "background_setting": "Natural, organic background with warm earth tones creating an authentic lifestyle context, possibly wood, linen, or natural materials",
+  "lighting": {
+    "conditions": "soft natural lighting",
+    "direction": "side lighting mimicking window light or golden hour sun",
+    "shadows": "gentle, soft shadows adding natural depth and dimension",
+    "quality": "diffused natural light, warm and inviting"
+  },
+  "photographic_characteristics": {
+    "camera_angle": "eye level or slightly above, natural perspective",
+    "depth_of_field": "moderate, product in focus with softly blurred background",
+    "focus": "sharp focus on product with natural falloff",
+    "lens_focal_length": "standard to portrait lens (50-85mm)"
+  },
+  "aesthetics": {
+    "composition": "natural, lifestyle-oriented arrangement with organic placement",
+    "color_scheme": "warm earth tones, golden hour palette, enhanced saturation",
+    "color_temperature": "warm, golden",
+    "color_saturation": "enhanced, vibrant but natural",
+    "mood_atmosphere": "warm, inviting, organic, approachable, cozy",
+    "preference_score": "very high",
+    "aesthetic_score": "very high"
+  },
+  "context": "Lifestyle and organic product photography with natural, approachable aesthetic for social media and lifestyle brands"
+}

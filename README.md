@@ -30,13 +30,30 @@ The system supports both text-to-image generation and image-to-image transformat
 ## Installation
 
 1. Clone the repository
+
 2. Install dependencies:
 
    ```bash
    uv sync
    ```
 
-3. Set up environment variables:
+3. Configure API keys:
+
+   ```bash
+   # Copy the example config file
+   copy config.example.py config.py
+   ```
+
+   Then edit `config.py` and add your actual API keys:
+
+   ```python
+   BRIA_API_KEY = "your_bria_api_key_here"
+   GEMINI_API_KEY = "your_gemini_api_key_here"
+   ```
+
+   **Important**: Never commit `config.py` with real API keys! This file is already in `.gitignore`.
+
+4. Set up environment variables (alternative to config.py for Gemini):
 
    ```bash
    # Windows CMD
@@ -44,12 +61,6 @@ The system supports both text-to-image generation and image-to-image transformat
    
    # Windows PowerShell
    $env:GOOGLE_API_KEY="your_gemini_api_key_here"
-   ```
-
-4. Configure Bria API key in `config.py`:
-
-   ```python
-   BRIA_API_KEY = "your_bria_api_key_here"
    ```
 
 ## Usage

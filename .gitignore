@@ -1,6 +1,16 @@
-# Ignore our secret API key
+# API Keys and Secrets
 config.py
+.kiro/settings/mcp.json
+
+# Python
 __pycache__/
 *.pyc
+.venv/
+
+# Generated files
 inputs/
 outputs/
+
+# Environment variables
+.env
+.env.local

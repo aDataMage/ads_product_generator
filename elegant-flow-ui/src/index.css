@@ -1,0 +1,471 @@
+/* Requirement 11.3: Import shadcn/ui theme variables and Tailwind CSS */
+@import "tailwindcss";
+
+/* Requirement 11.2, 11.3: shadcn/ui theme variables with consistent design tokens */
+@theme {
+  /* Color palette - minimalist and professional */
+  --color-background: oklch(100% 0 0);
+  --color-foreground: oklch(9% 0.024 285.82);
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(9% 0.024 285.82);
+  --color-popover: oklch(100% 0 0);
+  --color-popover-foreground: oklch(9% 0.024 285.82);
+  --color-primary: oklch(11.2% 0.024 285.82);
+  --color-primary-foreground: oklch(98% 0.008 285.82);
+  --color-secondary: oklch(96.1% 0.008 285.82);
+  --color-secondary-foreground: oklch(11.2% 0.024 285.82);
+  --color-muted: oklch(96.1% 0.008 285.82);
+  --color-muted-foreground: oklch(46.9% 0.026 285.82);
+  --color-accent: oklch(96.1% 0.008 285.82);
+  --color-accent-foreground: oklch(11.2% 0.024 285.82);
+  --color-destructive: oklch(60.2% 0.177 29.23);
+  --color-destructive-foreground: oklch(98% 0.008 285.82);
+  --color-border: oklch(91.4% 0.016 285.82);
+  --color-input: oklch(91.4% 0.016 285.82);
+  --color-ring: oklch(9% 0.024 285.82);
+
+  /* Requirement 11.4: Border radius for consistent design */
+  --radius: 0.5rem;
+
+  /* Requirement 11.2: Typography scale variables */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Requirement 11.4: Spacing scale for generous whitespace */
+  --spacing-xs: 0.5rem;
+  /* 8px */
+  --spacing-sm: 0.75rem;
+  /* 12px */
+  --spacing-md: 1rem;
+  /* 16px */
+  --spacing-lg: 1.5rem;
+  /* 24px */
+  --spacing-xl: 2rem;
+  /* 32px */
+  --spacing-2xl: 3rem;
+  /* 48px */
+
+  /* Requirement 10.4: Animation timing for smooth transitions */
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+
+  /* Requirement 10.5: Easing functions for natural animations */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode theme */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-background: oklch(9% 0.024 285.82);
+    --color-foreground: oklch(98% 0.008 285.82);
+    --color-card: oklch(9% 0.024 285.82);
+    --color-card-foreground: oklch(98% 0.008 285.82);
+    --color-popover: oklch(9% 0.024 285.82);
+    --color-popover-foreground: oklch(98% 0.008 285.82);
+    --color-primary: oklch(98% 0.008 285.82);
+    --color-primary-foreground: oklch(11.2% 0.024 285.82);
+    --color-secondary: oklch(17.5% 0.053 285.82);
+    --color-secondary-foreground: oklch(98% 0.008 285.82);
+    --color-muted: oklch(17.5% 0.053 285.82);
+    --color-muted-foreground: oklch(65.1% 0.033 285.82);
+    --color-accent: oklch(17.5% 0.053 285.82);
+    --color-accent-foreground: oklch(98% 0.008 285.82);
+    --color-destructive: oklch(30.6% 0.132 29.23);
+    --color-destructive-foreground: oklch(98% 0.008 285.82);
+    --color-border: oklch(17.5% 0.053 285.82);
+    --color-input: oklch(17.5% 0.053 285.82);
+    --color-ring: oklch(83.9% 0.044 285.82);
+  }
+}
+
+/* Requirement 11.1: Global base styles with minimalist design */
+* {
+  border-color: var(--color-border);
+}
+
+/* Requirement 11.1, 11.2: Base body styles with professional typography */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Requirement 11.2: Typography scale with clear visual hierarchy */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-foreground);
+}
+
+h1 {
+  font-size: 2.25rem;
+  /* 36px */
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.875rem;
+  /* 30px */
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.5rem;
+  /* 24px */
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 1.25rem;
+  /* 20px */
+  font-weight: 600;
+}
+
+h5 {
+  font-size: 1.125rem;
+  /* 18px */
+  font-weight: 600;
+}
+
+h6 {
+  font-size: 1rem;
+  /* 16px */
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Requirement 11.2: Text size utilities */
+.text-xs {
+  font-size: 0.75rem;
+  /* 12px */
+  line-height: 1rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  /* 14px */
+  line-height: 1.25rem;
+}
+
+.text-base {
+  font-size: 1rem;
+  /* 16px */
+  line-height: 1.5rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  /* 18px */
+  line-height: 1.75rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  /* 20px */
+  line-height: 1.75rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  /* 24px */
+  line-height: 2rem;
+}
+
+/* Requirement 11.5: Muted text for secondary information */
+.text-muted-foreground {
+  color: var(--color-muted-foreground);
+}
+
+/* Requirement 11.4: Layout utilities with generous whitespace */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+/* Requirement 10.1, 10.3: Custom animations for elegant transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Requirement 10.4: Animation utility classes */
+.animate-fade-in {
+  animation: fadeIn var(--duration-normal) var(--ease-out);
+}
+
+.animate-fade-out {
+  animation: fadeOut var(--duration-normal) var(--ease-in);
+}
+
+.animate-slide-up {
+  animation: slideUp var(--duration-normal) var(--ease-out);
+}
+
+.animate-slide-down {
+  animation: slideDown var(--duration-normal) var(--ease-out);
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-slow) var(--ease-out);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Requirement 11.4: Transition utilities */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: var(--ease-in-out);
+  transition-duration: var(--duration-normal);
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: var(--ease-in-out);
+  transition-duration: var(--duration-normal);
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: var(--ease-in-out);
+  transition-duration: var(--duration-normal);
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: var(--ease-out);
+  transition-duration: var(--duration-normal);
+}
+
+/* Requirement 13.5: Enhanced focus indicators for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* Skip to main content link for keyboard navigation */
+.skip-to-main {
+  position: absolute;
+  left: -9999px;
+  z-index: 999;
+  padding: 1rem 1.5rem;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  text-decoration: none;
+  border-radius: 0.375rem;
+}
+
+.skip-to-main:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Requirement 11.4: Card and component spacing utilities */
+.card-spacing {
+  padding: var(--spacing-lg);
+}
+
+.card-gap {
+  gap: var(--spacing-lg);
+}
+
+.element-gap {
+  gap: var(--spacing-md);
+}
+
+/* Requirement 11.1: Smooth scrolling for better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Requirement 11.5: Consistent button and interactive element styling */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* Requirement 11.4: Image utilities */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Requirement 10.5: Respect prefers-reduced-motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

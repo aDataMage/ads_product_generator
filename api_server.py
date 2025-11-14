@@ -9,10 +9,11 @@ import sys
 import logging
 import re
 import argparse
+import json
 from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from workflow import run_generation_workflow
+from workflow import run_generation_workflow, call_bria_with_structured_prompt
 
 
 def sanitize_log_message(message):
@@ -89,7 +90,11 @@ def create_app():
     """
     app = Flask(__name__)
 
-    # Configure CORS to allow requests from React development server
+    # Configure CORS to allow requests from React development servers
+    # This applies to ALL routes including:
+    # - /api/generate (standard mode)
+    # - /api/generate/pro (Pro Mode)
+    # Automatically handles preflight OPTIONS requests
     CORS(app, origins=["http://localhost:3000", "http://localhost:5173"])
 
     # Basic Flask configuration
@@ -140,6 +145,89 @@ def validate_request(data):
     if 'reference_image_base64' in data:
         if not isinstance(data['reference_image_base64'], str):
             return False, "Field 'reference_image_base64' must be a string"
+
+    return True, None
+
+
+def validate_pro_mode_request(data):
+    """Validate Pro Mode request body contains all required structured prompt fields.
+
+    Args:
+        data (dict): Request body data containing structured_prompt and seed
+
+    Returns:
+        tuple: (is_valid, error_message)
+            - is_valid (bool): True if validation passes
+            - error_message (str): Error description if validation fails, None otherwise
+    """
+    # Check if data is a dictionary
+    if not isinstance(data, dict):
+        return False, "Request body must be a JSON object"
+
+    # Validate presence of structured_prompt field
+    if 'structured_prompt' not in data:
+        return False, "Missing required field: structured_prompt"
+
+    if not isinstance(data['structured_prompt'], dict):
+        return False, "Field 'structured_prompt' must be an object"
+
+    # Validate presence of seed field
+    if 'seed' not in data:
+        return False, "Missing required field: seed"
+
+    if not isinstance(data['seed'], int):
+        return False, "Field 'seed' must be an integer"
+
+    sp = data['structured_prompt']
+
+    # Validate all top-level string fields
+    required_fields = ['short_description', 'background_setting', 'style_medium',
+                       'artistic_style', 'context']
+    for field in required_fields:
+        if field not in sp or not isinstance(sp[field], str) or not sp[field].strip():
+            return False, f"Missing or invalid field: {field}"
+
+    # Validate lighting nested object
+    if 'lighting' not in sp or not isinstance(sp['lighting'], dict):
+        return False, "Missing or invalid field: lighting"
+
+    lighting_fields = ['conditions', 'direction', 'shadows']
+    for field in lighting_fields:
+        if field not in sp['lighting'] or not isinstance(sp['lighting'][field], str):
+            return False, f"Missing or invalid field: lighting.{field}"
+
+    # Validate aesthetics nested object
+    if 'aesthetics' not in sp or not isinstance(sp['aesthetics'], dict):
+        return False, "Missing or invalid field: aesthetics"
+
+    aesthetics_fields = ['composition', 'color_scheme', 'mood_atmosphere']
+    for field in aesthetics_fields:
+        if field not in sp['aesthetics'] or not isinstance(sp['aesthetics'][field], str):
+            return False, f"Missing or invalid field: aesthetics.{field}"
+
+    # Validate photographic_characteristics nested object
+    if 'photographic_characteristics' not in sp or not isinstance(sp['photographic_characteristics'], dict):
+        return False, "Missing or invalid field: photographic_characteristics"
+
+    camera_fields = ['camera_angle',
+                     'lens_focal_length', 'depth_of_field', 'focus']
+    for field in camera_fields:
+        if field not in sp['photographic_characteristics'] or not isinstance(sp['photographic_characteristics'][field], str):
+            return False, f"Missing or invalid field: photographic_characteristics.{field}"
+
+    # Validate objects array
+    if 'objects' not in sp or not isinstance(sp['objects'], list):
+        return False, "Missing or invalid field: objects (must be a list)"
+
+    # Validate each object in array
+    object_fields = ['description', 'location', 'relationship', 'relative_size',
+                     'shape_and_color', 'texture', 'appearance_details']
+    for i, obj in enumerate(sp['objects']):
+        if not isinstance(obj, dict):
+            return False, f"Object at index {i} must be a dict"
+        for field in object_fields:
+            if field not in obj or not isinstance(obj[field], str):
+                return False, f"Missing or invalid field in object {i}: {field}"
 
     return True, None
 
@@ -263,6 +351,146 @@ def generate_image():
         }), 500
 
 
+@app.route('/api/generate/pro', methods=['POST'])
+def generate_pro_mode():
+    """Handle POST requests to generate images using Pro Mode (structured prompt).
+
+    Pro Mode endpoint - Direct Line to Bria (NO GEMINI).
+    This endpoint bypasses the Gemini translation layer entirely.
+
+    Request Body:
+        {
+            "structured_prompt": {
+                "short_description": str,
+                "background_setting": str,
+                "style_medium": str,
+                "artistic_style": str,
+                "context": str,
+                "lighting": {
+                    "conditions": str,
+                    "direction": str,
+                    "shadows": str
+                },
+                "aesthetics": {
+                    "composition": str,
+                    "color_scheme": str,
+                    "mood_atmosphere": str
+                },
+                "photographic_characteristics": {
+                    "camera_angle": str,
+                    "lens_focal_length": str,
+                    "depth_of_field": str,
+                    "focus": str
+                },
+                "objects": [
+                    {
+                        "description": str,
+                        "location": str,
+                        "relationship": str,
+                        "relative_size": str,
+                        "shape_and_color": str,
+                        "texture": str,
+                        "appearance_details": str
+                    }
+                ]
+            },
+            "seed": int
+        }
+
+    Returns:
+        Success (200): {"success": true, "final_image_url": "..."}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/generate/pro from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate structured_prompt structure
+        is_valid, error_msg = validate_pro_mode_request(data)
+        if not is_valid:
+            app.logger.warning(
+                f"[Request {request_id}] Pro Mode validation failed: {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": error_msg
+            }), 400
+
+        structured_prompt = data['structured_prompt']
+        seed = data['seed']
+
+        app.logger.info(
+            f"[Request {request_id}] Pro Mode generation with seed {seed}")
+
+        # CRITICAL: Convert structured_prompt to JSON string
+        # This is the "Direct Line" - we send the JSON as a string to Bria
+        prompt_json_string = json.dumps(structured_prompt)
+
+        app.logger.info(
+            f"[Request {request_id}] Converted structured prompt to JSON string "
+            f"({len(prompt_json_string)} chars)")
+
+        # Call Bria API directly (NO GEMINI - this is the key difference)
+        try:
+            result = call_bria_with_structured_prompt(prompt_json_string, seed)
+        except Exception as bria_error:
+            app.logger.error(
+                f"[Request {request_id}] Bria API call failed: {str(bria_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Image generation failed: {str(bria_error)}"
+            }), 500
+
+        # Return response
+        if result and result.get('image_url'):
+            app.logger.info(
+                f"[Request {request_id}] Pro Mode generation successful")
+            return jsonify({
+                "success": True,
+                "final_image_url": result['image_url']
+            }), 200
+        else:
+            app.logger.error(
+                f"[Request {request_id}] Pro Mode generation failed")
+            return jsonify({
+                "success": False,
+                "error": "Image generation failed"
+            }), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in generate_pro_mode endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
 if __name__ == '__main__':
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
@@ -289,7 +517,10 @@ if __name__ == '__main__':
 
     # Log startup information
     app.logger.info(f"Starting Flask API server on {host}:{port}")
-    app.logger.info(f"CORS enabled for: http://localhost:3000")
+    app.logger.info(
+        f"CORS enabled for: http://localhost:3000, http://localhost:5173")
+    app.logger.info(
+        f"Endpoints: /api/generate (standard), /api/generate/pro (Pro Mode)")
     app.logger.info(
         f"Environment: {'production' if os.environ.get('FLASK_ENV') == 'production' else 'development'}")
 

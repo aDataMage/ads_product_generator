@@ -1,0 +1,99 @@
+/**
+ * Pro Mode Accessibility Styles
+ * 
+ * Requirements:
+ * - 10.3: Visible focus indicators for keyboard navigation
+ * - 10.4: Enhanced focus management for interactive elements
+ */
+
+/* Enhanced focus indicators for all interactive elements in Pro Mode */
+.pro-mode-form *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Accordion trigger focus styles */
+.pro-mode-form [data-radix-collection-item]:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+}
+
+/* Button focus styles with enhanced visibility */
+.pro-mode-form button:focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.2);
+}
+
+/* Input and textarea focus styles */
+.pro-mode-form input:focus-visible,
+.pro-mode-form textarea:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 1px;
+    border-color: hsl(var(--ring));
+}
+
+/* Skip to content link for keyboard users */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 100;
+}
+
+.skip-to-content:focus {
+    top: 8px;
+    left: 8px;
+}
+
+/* Screen reader only text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .pro-mode-form *:focus-visible {
+        outline-width: 3px;
+        outline-offset: 3px;
+    }
+
+    .pro-mode-form button:focus-visible {
+        outline-width: 4px;
+        outline-offset: 4px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .pro-mode-form * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus within styles for containers */
+.pro-mode-form .accordion-item:focus-within {
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+/* Object card focus styles */
+.pro-mode-form [role="group"]:focus-within {
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+    border-color: hsl(var(--ring));
+}

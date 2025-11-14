@@ -64,3 +64,92 @@ export interface AppState extends FormState {
     generatedImageUrl: string | null;
     error: string | null;
 }
+
+/**
+ * Pro Mode Types
+ * Requirements 1.1, 1.4, 7.1: Pro Mode structured prompt interfaces
+ */
+
+/**
+ * Lighting configuration for Pro Mode
+ * Requirement 3.1, 3.2, 3.3: Lighting parameters
+ */
+export interface LightingConfig {
+    conditions: string;
+    direction: string;
+    shadows: string;
+}
+
+/**
+ * Aesthetics configuration for Pro Mode
+ * Requirement 4.1, 4.2, 4.3: Aesthetic parameters
+ */
+export interface AestheticsConfig {
+    composition: string;
+    color_scheme: string;
+    mood_atmosphere: string;
+}
+
+/**
+ * Camera/Photographic characteristics configuration for Pro Mode
+ * Requirement 5.1, 5.2, 5.3: Camera parameters
+ */
+export interface CameraConfig {
+    camera_angle: string;
+    lens_focal_length: string;
+    depth_of_field: string;
+    focus: string;
+}
+
+/**
+ * Object definition for Pro Mode Object Builder
+ * Requirement 6.1, 6.5, 6.6, 6.7: Object properties
+ */
+export interface ObjectDefinition {
+    id: string; // Client-side only (UUID for React key management), not sent to API
+    description: string;
+    location: string;
+    relationship: string;
+    relative_size: string;
+    shape_and_color: string;
+    texture: string;
+    appearance_details: string;
+}
+
+/**
+ * Complete structured prompt for Pro Mode
+ * Requirement 1.1, 1.4: Structured prompt with all sections
+ */
+export interface StructuredPrompt {
+    short_description: string;
+    background_setting: string;
+    style_medium: string;
+    artistic_style: string;
+    context: string;
+    lighting: LightingConfig;
+    aesthetics: AestheticsConfig;
+    photographic_characteristics: CameraConfig;
+    objects: ObjectDefinition[];
+}
+
+/**
+ * Pro Mode API Request interface
+ * Requirement 7.1, 7.2, 7.3, 7.4: Pro Mode generation request
+ * Note: The 'id' field is removed from objects before sending to API
+ */
+export interface ProModeGenerateRequest {
+    structured_prompt: Omit<StructuredPrompt, 'objects'> & {
+        objects: Omit<ObjectDefinition, 'id'>[];
+    };
+    seed: number;
+}
+
+/**
+ * Pro Mode API Response interface
+ * Requirement 7.8, 7.9, 8.1, 8.2: Pro Mode generation response
+ */
+export interface ProModeGenerateResponse {
+    success: boolean;
+    final_image_url?: string;
+    error?: string;
+}

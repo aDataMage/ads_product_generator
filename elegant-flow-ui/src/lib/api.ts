@@ -3,7 +3,12 @@
  * Requirements 14.1, 14.2, 14.3, 14.4
  */
 
-import type { GenerateImageRequest, GenerateImageResponse } from './types';
+import type {
+    GenerateImageRequest,
+    GenerateImageResponse,
+    ProModeGenerateRequest,
+    ProModeGenerateResponse
+} from './types';
 
 /**
  * API configuration
@@ -107,6 +112,97 @@ export async function generateImage(
             // Timeout error
             throw new ApiError(
                 'Request timed out. Image generation is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        // Unknown error
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
+ * Generate image using Pro Mode (structured prompt)
+ * Bypasses Gemini translation layer and sends structured prompt directly to Bria
+ * 
+ * Requirement 7.3: Send POST request to /api/generate/pro endpoint
+ * Requirement 7.4: Include structured_prompt and seed in request payload
+ * Requirement 8.1: Handle loading states during API call
+ * Requirement 8.2: Display error messages for failed generations
+ * 
+ * @param request - The Pro Mode generation request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function generateProMode(
+    request: ProModeGenerateRequest
+): Promise<ProModeGenerateResponse> {
+    // Create an AbortController for timeout handling (120 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        // Requirement 7.3: Send POST request to /api/generate/pro endpoint
+        const response = await fetch(`${API_BASE_URL}/api/generate/pro`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        // Clear the timeout since request completed
+        clearTimeout(timeoutId);
+
+        // Parse the JSON response
+        const data: ProModeGenerateResponse = await response.json();
+
+        // Handle non-2xx HTTP status codes
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        // Requirement 8.2: Handle API responses with success field
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Image generation failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        // Clear timeout in case of error
+        clearTimeout(timeoutId);
+
+        // Requirement 8.2: Handle network failures with user-friendly messages
+        if (error instanceof ApiError) {
+            // Re-throw ApiError instances
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            // Network error (e.g., no internet connection, CORS issue)
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            // Timeout error (120 seconds)
+            throw new ApiError(
+                'Request timed out. Pro Mode generation is taking longer than expected. Please try again.',
                 408,
                 error
             );

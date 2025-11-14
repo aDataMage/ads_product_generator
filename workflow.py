@@ -238,6 +238,92 @@ def call_gemini_translator(user_prompt: str, preset_json: dict) -> str:
         raise
 
 
+def call_bria_with_structured_prompt(prompt_json_string: str, seed: int) -> dict:
+    """Call Bria API directly with structured prompt JSON string (bypassing Gemini).
+
+    This is the Pro Mode "Direct Line" - no translation, no Gemini.
+    The structured_prompt has already been converted to a JSON string by the endpoint.
+
+    Args:
+        prompt_json_string: The structured prompt as a JSON string (from json.dumps())
+        seed: Random seed for generation consistency
+
+    Returns:
+        dict with 'image_url' on success
+
+    Raises:
+        Exception: If Bria API call fails
+    """
+    try:
+        logger.info("Pro Mode: Calling Bria API directly (bypassing Gemini)")
+        logger.debug(
+            f"Prompt JSON string length: {len(prompt_json_string)} characters")
+        logger.debug(f"Seed: {seed}")
+
+        # Build the Bria payload
+        # CRITICAL: The "prompt" field contains the JSON string
+        payload = {
+            "prompt": prompt_json_string,
+            "seed": seed
+        }
+
+        # Submit job to Bria (same API call as standard mode)
+        logger.info("Submitting Pro Mode job to Bria API")
+        response = requests.post(
+            BRIA_API_ENDPOINT,
+            json=payload,
+            headers=BRIA_HEADERS,
+            timeout=30
+        )
+
+        # Check response status
+        if response.status_code != 202:
+            error_detail = response.text[:200] if response.text else "No error details"
+            logger.error(
+                f"Bria API rejected Pro Mode request with status {response.status_code}: {error_detail}"
+            )
+            raise Exception(
+                f"Bria API request failed with status code {response.status_code}"
+            )
+
+        response_data = response.json()
+        request_id = response_data.get('request_id', 'unknown')
+        status_url = response_data.get('status_url')
+
+        if not status_url:
+            logger.error("Bria API response missing status_url")
+            raise Exception("Bria API response missing status_url")
+
+        logger.info(f"Pro Mode: Bria job accepted. Request ID: {request_id}")
+
+        # Poll for result (reuse existing polling logic)
+        result = poll_for_result(status_url)
+
+        if not result:
+            logger.error("Pro Mode: Bria job completed but returned no result")
+            raise Exception("Bria job failed to generate a final image")
+
+        image_url = result.get('image_url')
+        if not image_url:
+            logger.error("Pro Mode: Bria result missing image_url")
+            raise Exception("Bria result missing image_url")
+
+        logger.info(
+            f"Pro Mode: Bria successfully generated image: {image_url}")
+        return result
+
+    except requests.exceptions.Timeout:
+        logger.error("Pro Mode: Bria API request timed out")
+        raise Exception("Bria API request timed out after 30 seconds")
+    except requests.exceptions.RequestException as e:
+        logger.error(
+            f"Pro Mode: Bria API request error: {str(e)}", exc_info=True)
+        raise Exception(f"Bria API request failed: {str(e)}")
+    except Exception as e:
+        logger.error(f"Pro Mode: Bria call failed: {str(e)}", exc_info=True)
+        raise
+
+
 def call_bria_engine(master_prompt: str, image_base64: str = None) -> dict:
     """Call Bria API to generate final image.
 

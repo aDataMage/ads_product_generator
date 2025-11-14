@@ -139,13 +139,13 @@ export function SceneStyleSection({ values, onChange, errors = {} }: SceneStyleS
             {/* Context - Requirement 2.2: Textarea */}
             <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="context" className="text-sm sm:text-base">
-                    Context <span className="text-destructive">*</span>
+                    Context
                 </Label>
                 <Textarea
                     id="context"
                     value={values.context}
                     onChange={handleChange("context")}
-                    placeholder="Additional context or mood (e.g., 'Professional product photography for e-commerce')"
+                    placeholder="Additional context or mood (e.g., 'Professional product photography for e-commerce'). Optional - can be enhanced by Photography Mode selection."
                     rows={2}
                     className={`resize-none text-sm sm:text-base ${errors.context ? 'border-destructive' : ''}`}
                     aria-label="Additional context"

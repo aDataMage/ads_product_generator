@@ -304,11 +304,13 @@ export function ProModeForm() {
             const cleanedObjects = structuredPrompt.objects.map(({ id, ...rest }) => rest);
 
             // Add photography mode to context if selected
-            let enhancedContext = structuredPrompt.context;
+            let enhancedContext = structuredPrompt.context || '';
             if (photographyMode && photographyMode !== 'none') {
                 const mode = getModeById(photographyMode);
                 if (mode) {
-                    enhancedContext = `${structuredPrompt.context}\n\nPhotography Style: ${mode.promptAddition}`;
+                    // Add separator if context already has content
+                    const separator = enhancedContext.trim() ? '\n\n' : '';
+                    enhancedContext = `${enhancedContext}${separator}Photography Style: ${mode.promptAddition}`;
                 }
             }
 
@@ -475,8 +477,11 @@ export function ProModeForm() {
                                     <strong>Objects:</strong> {structuredPrompt.objects.length} object(s) defined
                                 </div>
                                 {photographyMode && photographyMode !== 'none' && (
-                                    <div>
+                                    <div className="pt-2 border-t">
                                         <strong>Photography Mode:</strong> {getModeById(photographyMode)?.name || 'None'}
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {getModeById(photographyMode)?.description}
+                                        </p>
                                     </div>
                                 )}
                             </div>

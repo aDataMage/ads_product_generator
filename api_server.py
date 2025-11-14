@@ -351,6 +351,23 @@ def generate_image():
         }), 500
 
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for monitoring server status.
+
+    Returns:
+        Success (200): {"status": "healthy", "version": "1.0"}
+    """
+    return jsonify({
+        "status": "healthy",
+        "version": "1.0",
+        "endpoints": {
+            "standard": "/api/generate",
+            "pro_mode": "/api/generate/pro"
+        }
+    }), 200
+
+
 @app.route('/api/generate/pro', methods=['POST'])
 def generate_pro_mode():
     """Handle POST requests to generate images using Pro Mode (structured prompt).

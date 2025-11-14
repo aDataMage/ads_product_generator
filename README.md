@@ -13,12 +13,31 @@ The system supports both text-to-image generation and image-to-image transformat
 
 ## Features
 
+### Standard Mode
+
 - Multiple style presets (bright clean, luxury reflection, minimalist shadow, etc.)
 - Reference image support for product preservation
+- Simple user prompt with automated enhancement via Gemini
+- Professional product photography output via Bria API
+
+### Pro Mode - Structured Prompt Builder
+
+- Granular control over every aspect of image generation
+- 7-step wizard interface for detailed configuration
+- **25+ Professional Photography Modes** across 4 categories:
+  - **Commercial**: Catalog, Hero Product Shot, Lifestyle, Packshot
+  - **Artistic**: Fine Art, Still Life, Abstract, Minimalist Zen, Natural Window Light, Reflection & Mirror
+  - **Technical**: Macro Detail, Focus Stacking, High/Low Key, Rim Lighting, Gradient Background, Studio Strobe
+  - **Editorial**: Fashion, Documentary, Architectural, Cinematic, Vintage Analog, Neon Cyberpunk, Golden Hour
+- Direct control over lighting, aesthetics, camera settings, and scene composition
+- Object builder for multi-object scenes
+- Bypasses Gemini translation for maximum control
+
+### Integration Options
+
 - REST API server for web integration
 - MCP server integration for IDE tool calls
-- Automated prompt engineering via Gemini
-- Professional product photography output via Bria API
+- React UI with Standard and Pro modes
 
 ## Prerequisites
 
@@ -75,11 +94,28 @@ python api_server.py
 
 The server runs on `http://localhost:5000` by default.
 
-#### API Endpoint
+#### API Endpoints
+
+**GET /health**
+
+Health check endpoint for monitoring server status.
+
+**Response (200):**
+
+```json
+{
+  "status": "healthy",
+  "version": "1.0",
+  "endpoints": {
+    "standard": "/api/generate",
+    "pro_mode": "/api/generate/pro"
+  }
+}
+```
 
 **POST /api/generate**
 
-Generate a styled product image.
+Generate a styled product image using Standard Mode (Gemini + Bria).
 
 **Request Body:**
 
@@ -143,6 +179,51 @@ const response = await fetch('http://localhost:5000/api/generate', {
 
 const result = await response.json();
 console.log(result.final_image_url);
+```
+
+**POST /api/generate/pro**
+
+Generate a styled product image using Pro Mode (Direct to Bria with structured prompt).
+
+**Request Body:**
+
+```json
+{
+  "structured_prompt": {
+    "short_description": "Modern smartphone",
+    "background_setting": "Clean white studio background",
+    "style_medium": "Photography",
+    "artistic_style": "Minimalist",
+    "context": "Professional product photography for e-commerce",
+    "lighting": {
+      "conditions": "Soft studio lighting",
+      "direction": "Front and top",
+      "shadows": "Minimal soft shadows"
+    },
+    "aesthetics": {
+      "composition": "Centered with negative space",
+      "color_scheme": "Clean whites and grays",
+      "mood_atmosphere": "Professional and modern"
+    },
+    "photographic_characteristics": {
+      "camera_angle": "Straight on at eye level",
+      "lens_focal_length": "50mm standard lens",
+      "depth_of_field": "Deep focus, everything sharp",
+      "focus": "Product centered and sharp"
+    },
+    "objects": []
+  },
+  "seed": 123456
+}
+```
+
+**Success Response (200):**
+
+```json
+{
+  "success": true,
+  "final_image_url": "https://bria-api.com/images/xyz789.jpg"
+}
 ```
 
 ### Option 2: Standalone Script

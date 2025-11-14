@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SceneStyleSection } from "./pro-mode/SceneStyleSection";
 import { LightingSection } from "./pro-mode/LightingSection";
 import { AestheticsSection } from "./pro-mode/AestheticsSection";
@@ -48,19 +43,17 @@ interface ValidationErrors {
  * ProModeForm Component
  * 
  * Main container component for Pro Mode - Structured Prompt Builder
+ * Uses a wizard-style tab navigation with Next/Previous buttons
  * 
  * Requirements:
- * - 1.1: Display single-page form with collapsible accordion sections
- * - 1.2: Organize form inputs into five distinct sections
- * - 1.3: Use shadcn/ui components and Tailwind CSS styling
- * - 1.4: Maintain all form data in React state as structured JSON object
- * - 1.5: Display primary "Generate Image" button at bottom
+ * - 1.1: Provide granular control over image generation parameters
+ * - 1.2: Organize controls into logical sections
+ * - 1.3: Support progressive disclosure through wizard steps
+ * - 1.4: Maintain state across all form fields
+ * - 1.5: Generate images using structured prompts
  */
 export function ProModeForm() {
-    /**
-     * Requirement 1.4: Initialize StructuredPrompt state with empty values
-     * This state mirrors the final API payload structure
-     */
+    // Requirement 1.4: State management for structured prompt
     const [structuredPrompt, setStructuredPrompt] = useState<StructuredPrompt>({
         short_description: "",
         background_setting: "",
@@ -86,116 +79,66 @@ export function ProModeForm() {
         objects: [],
     });
 
-    /**
-     * Requirement 1.5, 8.1: Initialize loading, result, error, and validation state
-     */
+    // Wizard navigation state
+    const [currentStep, setCurrentStep] = useState(0);
+
+    // Generation state
     const [isLoading, setIsLoading] = useState(false);
     const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-    const [lastPayload, setLastPayload] = useState<any>(null); // Store last payload for retry
+    const [lastPayload, setLastPayload] = useState<any>(null);
     const [retryCount, setRetryCount] = useState(0);
 
-    /**
-     * Requirement 8.1: Validate structured prompt fields
-     * Returns validation errors object
-     */
-    const validateForm = (): ValidationErrors => {
-        const errors: ValidationErrors = {};
+    // Define wizard steps
+    const steps = [
+        {
+            id: "scene",
+            title: "Scene & Style",
+            description: "Define the overall scene and artistic direction",
+        },
+        {
+            id: "lighting",
+            title: "Lighting",
+            description: "Configure lighting conditions and shadows",
+        },
+        {
+            id: "aesthetics",
+            title: "Aesthetics",
+            description: "Set composition, colors, and mood",
+        },
+        {
+            id: "camera",
+            title: "Camera",
+            description: "Define camera angle, lens, and focus",
+        },
+        {
+            id: "objects",
+            title: "Objects",
+            description: "Add and configure objects in the scene",
+        },
+        {
+            id: "review",
+            title: "Review & Generate",
+            description: "Review your settings and generate the image",
+        },
+    ];
 
-        // Validate top-level fields
-        if (!structuredPrompt.short_description.trim()) {
-            errors.short_description = "Short description is required";
-        }
-        if (!structuredPrompt.background_setting.trim()) {
-            errors.background_setting = "Background setting is required";
-        }
-        if (!structuredPrompt.style_medium.trim()) {
-            errors.style_medium = "Style medium is required";
-        }
-        if (!structuredPrompt.artistic_style.trim()) {
-            errors.artistic_style = "Artistic style is required";
-        }
-        if (!structuredPrompt.context.trim()) {
-            errors.context = "Context is required";
-        }
-
-        // Validate lighting fields
-        const lightingErrors: any = {};
-        if (!structuredPrompt.lighting.conditions.trim()) {
-            lightingErrors.conditions = "Lighting conditions are required";
-        }
-        if (!structuredPrompt.lighting.direction.trim()) {
-            lightingErrors.direction = "Lighting direction is required";
-        }
-        if (!structuredPrompt.lighting.shadows.trim()) {
-            lightingErrors.shadows = "Shadow description is required";
-        }
-        if (Object.keys(lightingErrors).length > 0) {
-            errors.lighting = lightingErrors;
-        }
-
-        // Validate aesthetics fields
-        const aestheticsErrors: any = {};
-        if (!structuredPrompt.aesthetics.composition.trim()) {
-            aestheticsErrors.composition = "Composition is required";
-        }
-        if (!structuredPrompt.aesthetics.color_scheme.trim()) {
-            aestheticsErrors.color_scheme = "Color scheme is required";
-        }
-        if (!structuredPrompt.aesthetics.mood_atmosphere.trim()) {
-            aestheticsErrors.mood_atmosphere = "Mood/atmosphere is required";
-        }
-        if (Object.keys(aestheticsErrors).length > 0) {
-            errors.aesthetics = aestheticsErrors;
-        }
-
-        // Validate camera fields
-        const cameraErrors: any = {};
-        if (!structuredPrompt.photographic_characteristics.camera_angle.trim()) {
-            cameraErrors.camera_angle = "Camera angle is required";
-        }
-        if (!structuredPrompt.photographic_characteristics.lens_focal_length.trim()) {
-            cameraErrors.lens_focal_length = "Lens focal length is required";
-        }
-        if (!structuredPrompt.photographic_characteristics.depth_of_field.trim()) {
-            cameraErrors.depth_of_field = "Depth of field is required";
-        }
-        if (!structuredPrompt.photographic_characteristics.focus.trim()) {
-            cameraErrors.focus = "Focus is required";
-        }
-        if (Object.keys(cameraErrors).length > 0) {
-            errors.photographic_characteristics = cameraErrors;
-        }
-
-        return errors;
-    };
-
-    /**
-     * Requirement 1.4, 8.1: Handle top-level string field changes
-     * Updates Scene & Style section fields and clears validation errors
-     */
-    const handleFieldChange = (field: string, value: string) => {
+    // Requirement 1.4: State update handlers for top-level fields
+    const handleFieldChange = (field: keyof StructuredPrompt, value: string) => {
         setStructuredPrompt((prev) => ({
             ...prev,
             [field]: value,
         }));
-
         // Clear validation error for this field
-        if (validationErrors[field as keyof ValidationErrors]) {
-            setValidationErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors[field as keyof ValidationErrors];
-                return newErrors;
-            });
-        }
+        setValidationErrors((prev) => ({
+            ...prev,
+            [field]: undefined,
+        }));
     };
 
-    /**
-     * Requirement 1.4, 8.1: Handle lighting nested object changes
-     * Updates Lighting section fields and clears validation errors
-     */
-    const handleLightingChange = (field: string, value: string) => {
+    // Requirement 1.4: State update handler for lighting nested object
+    const handleLightingChange = (field: keyof StructuredPrompt["lighting"], value: string) => {
         setStructuredPrompt((prev) => ({
             ...prev,
             lighting: {
@@ -203,30 +146,17 @@ export function ProModeForm() {
                 [field]: value,
             },
         }));
-
-        // Clear validation error for this field
-        if (validationErrors.lighting?.[field as keyof typeof validationErrors.lighting]) {
-            setValidationErrors((prev) => {
-                const newErrors = { ...prev };
-                if (newErrors.lighting) {
-                    const newLightingErrors = { ...newErrors.lighting };
-                    delete newLightingErrors[field as keyof typeof newLightingErrors];
-                    if (Object.keys(newLightingErrors).length === 0) {
-                        delete newErrors.lighting;
-                    } else {
-                        newErrors.lighting = newLightingErrors;
-                    }
-                }
-                return newErrors;
-            });
-        }
+        setValidationErrors((prev) => ({
+            ...prev,
+            lighting: {
+                ...prev.lighting,
+                [field]: undefined,
+            },
+        }));
     };
 
-    /**
-     * Requirement 1.4, 8.1: Handle aesthetics nested object changes
-     * Updates Aesthetics section fields and clears validation errors
-     */
-    const handleAestheticsChange = (field: string, value: string) => {
+    // Requirement 1.4: State update handler for aesthetics nested object
+    const handleAestheticsChange = (field: keyof StructuredPrompt["aesthetics"], value: string) => {
         setStructuredPrompt((prev) => ({
             ...prev,
             aesthetics: {
@@ -234,30 +164,20 @@ export function ProModeForm() {
                 [field]: value,
             },
         }));
-
-        // Clear validation error for this field
-        if (validationErrors.aesthetics?.[field as keyof typeof validationErrors.aesthetics]) {
-            setValidationErrors((prev) => {
-                const newErrors = { ...prev };
-                if (newErrors.aesthetics) {
-                    const newAestheticsErrors = { ...newErrors.aesthetics };
-                    delete newAestheticsErrors[field as keyof typeof newAestheticsErrors];
-                    if (Object.keys(newAestheticsErrors).length === 0) {
-                        delete newErrors.aesthetics;
-                    } else {
-                        newErrors.aesthetics = newAestheticsErrors;
-                    }
-                }
-                return newErrors;
-            });
-        }
+        setValidationErrors((prev) => ({
+            ...prev,
+            aesthetics: {
+                ...prev.aesthetics,
+                [field]: undefined,
+            },
+        }));
     };
 
-    /**
-     * Requirement 1.4, 8.1: Handle camera/photographic_characteristics nested object changes
-     * Updates Camera section fields and clears validation errors
-     */
-    const handleCameraChange = (field: string, value: string) => {
+    // Requirement 1.4: State update handler for camera nested object
+    const handleCameraChange = (
+        field: keyof StructuredPrompt["photographic_characteristics"],
+        value: string
+    ) => {
         setStructuredPrompt((prev) => ({
             ...prev,
             photographic_characteristics: {
@@ -265,32 +185,19 @@ export function ProModeForm() {
                 [field]: value,
             },
         }));
-
-        // Clear validation error for this field
-        if (validationErrors.photographic_characteristics?.[field as keyof typeof validationErrors.photographic_characteristics]) {
-            setValidationErrors((prev) => {
-                const newErrors = { ...prev };
-                if (newErrors.photographic_characteristics) {
-                    const newCameraErrors = { ...newErrors.photographic_characteristics };
-                    delete newCameraErrors[field as keyof typeof newCameraErrors];
-                    if (Object.keys(newCameraErrors).length === 0) {
-                        delete newErrors.photographic_characteristics;
-                    } else {
-                        newErrors.photographic_characteristics = newCameraErrors;
-                    }
-                }
-                return newErrors;
-            });
-        }
+        setValidationErrors((prev) => ({
+            ...prev,
+            photographic_characteristics: {
+                ...prev.photographic_characteristics,
+                [field]: undefined,
+            },
+        }));
     };
 
-    /**
-     * Requirement 6.3: Handle adding new object to objects array
-     * Generates UUID for client-side React key management
-     */
+    // Requirement 6.3: Add new object with UUID
     const handleAddObject = () => {
         const newObject: ObjectDefinition = {
-            id: crypto.randomUUID(), // Generate UUID for React key
+            id: crypto.randomUUID(),
             description: "",
             location: "",
             relationship: "",
@@ -299,16 +206,13 @@ export function ProModeForm() {
             texture: "",
             appearance_details: "",
         };
-
         setStructuredPrompt((prev) => ({
             ...prev,
             objects: [...prev.objects, newObject],
         }));
     };
 
-    /**
-     * Requirement 6.4, 6.7: Handle removing object from objects array
-     */
+    // Requirement 6.4: Remove object from array
     const handleRemoveObject = (id: string) => {
         setStructuredPrompt((prev) => ({
             ...prev,
@@ -316,10 +220,12 @@ export function ProModeForm() {
         }));
     };
 
-    /**
-     * Requirement 6.7: Handle updating specific object property
-     */
-    const handleObjectFieldChange = (id: string, field: string, value: string) => {
+    // Requirement 6.7: Update specific object field
+    const handleObjectFieldChange = (
+        id: string,
+        field: keyof ObjectDefinition,
+        value: string
+    ) => {
         setStructuredPrompt((prev) => ({
             ...prev,
             objects: prev.objects.map((obj) =>
@@ -328,422 +234,416 @@ export function ProModeForm() {
         }));
     };
 
-    /**
-     * Requirement 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4: Handle form submission and image generation
-     * 
-     * This function:
-     * - Validates all required fields
-     * - Generates a random seed
-     * - Removes client-side 'id' field from objects
-     * - Constructs payload with structured_prompt and seed
-     * - Calls generateProMode API function
-     * - Handles loading, success, and error states with user-friendly messages
-     */
+    // Requirement 8.1: Client-side validation
+    const validateForm = (): boolean => {
+        const errors: ValidationErrors = {};
+        let isValid = true;
+
+        // Validate top-level fields
+        if (!structuredPrompt.short_description.trim()) {
+            errors.short_description = "Short description is required";
+            isValid = false;
+        }
+        if (!structuredPrompt.background_setting.trim()) {
+            errors.background_setting = "Background setting is required";
+            isValid = false;
+        }
+
+        // Validate lighting
+        if (!structuredPrompt.lighting.conditions.trim()) {
+            errors.lighting = { ...errors.lighting, conditions: "Lighting conditions are required" };
+            isValid = false;
+        }
+
+        // Validate aesthetics
+        if (!structuredPrompt.aesthetics.composition.trim()) {
+            errors.aesthetics = { ...errors.aesthetics, composition: "Composition is required" };
+            isValid = false;
+        }
+
+        // Validate camera
+        if (!structuredPrompt.photographic_characteristics.camera_angle.trim()) {
+            errors.photographic_characteristics = {
+                ...errors.photographic_characteristics,
+                camera_angle: "Camera angle is required",
+            };
+            isValid = false;
+        }
+
+        setValidationErrors(errors);
+        return isValid;
+    };
+
+    // Requirement 7.3: Form submission handler
     const handleGenerate = async () => {
+        // Validate form
+        if (!validateForm()) {
+            setError("Please fill in all required fields before generating.");
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        setGeneratedImageUrl(null);
+
         try {
-            // Requirement 8.1: Validate form before submission
-            const errors = validateForm();
-            if (Object.keys(errors).length > 0) {
-                setValidationErrors(errors);
-                setError("Please fill in all required fields before generating.");
-                return;
-            }
-
-            // Clear previous results, errors, and validation errors
-            setError(null);
-            setGeneratedImageUrl(null);
-            setValidationErrors({});
-
             // Requirement 7.2: Generate random seed
             const seed = Math.floor(Math.random() * 1000000);
 
-            // Requirement 7.3: Remove client-side 'id' field from objects before API call
-            const objectsForApi = structuredPrompt.objects.map(({ id, ...rest }) => rest);
+            // Requirement 7.6: Remove client-side 'id' field from objects
+            const cleanedObjects = structuredPrompt.objects.map(({ id, ...rest }) => rest);
 
-            // Requirement 7.4: Construct payload with structured_prompt and seed
             const payload = {
                 structured_prompt: {
                     ...structuredPrompt,
-                    objects: objectsForApi,
+                    objects: cleanedObjects,
                 },
                 seed,
             };
 
-            // Store payload for retry functionality
             setLastPayload(payload);
 
-            // Requirement 7.5, 7.6: Set loading state and call API
-            setIsLoading(true);
-            const response = await generateProMode(payload);
+            // Requirement 7.3: Call Pro Mode API
+            const result = await generateProMode(payload);
 
-            // Requirement 7.7, 7.8: Handle success response
-            if (response.success && response.final_image_url) {
-                setGeneratedImageUrl(response.final_image_url);
-                setRetryCount(0); // Reset retry count on success
+            // Requirement 7.8: Handle success
+            if (result.final_image_url) {
+                setGeneratedImageUrl(result.final_image_url);
+                setRetryCount(0);
             } else {
-                setError(response.error || "Image generation failed");
+                setError("Image generation succeeded but no image URL was returned.");
             }
         } catch (err) {
-            // Requirement 8.2, 8.3: Handle error response with user-friendly messages
+            // Requirement 8.2: Handle errors
             if (err instanceof ApiError) {
-                // Handle specific API errors
-                if (err.statusCode === 408) {
-                    // Timeout error
-                    setError(
-                        "Request timed out. The generation is taking longer than expected. " +
-                        "Please try again or simplify your prompt."
-                    );
-                } else if (err.statusCode === 400) {
-                    // Validation error from backend
-                    setError(`Validation error: ${err.message}`);
-                } else if (err.statusCode === 500) {
-                    // Server error
-                    setError(
-                        "Server error occurred. The image generation service may be temporarily unavailable. " +
-                        "Please try again in a few moments."
-                    );
-                } else if (err.message.includes("Network error")) {
-                    // Network error
-                    setError(
-                        "Network error. Please check your internet connection and try again. " +
-                        "If the problem persists, the server may be unreachable."
-                    );
-                } else {
-                    // Generic API error
-                    setError(err.message);
-                }
-            } else if (err instanceof Error) {
                 setError(err.message);
             } else {
                 setError("An unexpected error occurred. Please try again.");
             }
         } finally {
-            // Always clear loading state
             setIsLoading(false);
         }
     };
 
-    /**
-     * Requirement 8.4: Retry functionality for failed generations
-     * Reuses the last payload to retry the generation
-     */
+    // Requirement 8.4: Retry functionality
     const handleRetry = async () => {
-        if (!lastPayload) {
-            setError("No previous request to retry. Please generate a new image.");
-            return;
-        }
+        if (!lastPayload) return;
+
+        setIsLoading(true);
+        setError(null);
+        setGeneratedImageUrl(null);
+        setRetryCount((prev) => prev + 1);
 
         try {
-            // Clear previous errors
-            setError(null);
-            setGeneratedImageUrl(null);
-
-            // Increment retry count
-            setRetryCount((prev) => prev + 1);
-
-            // Requirement 7.5, 7.6: Set loading state and call API
-            setIsLoading(true);
-            const response = await generateProMode(lastPayload);
-
-            // Requirement 7.7, 7.8: Handle success response
-            if (response.success && response.final_image_url) {
-                setGeneratedImageUrl(response.final_image_url);
-                setRetryCount(0); // Reset retry count on success
+            const result = await generateProMode(lastPayload);
+            if (result.final_image_url) {
+                setGeneratedImageUrl(result.final_image_url);
             } else {
-                setError(response.error || "Image generation failed");
+                setError("Image generation succeeded but no image URL was returned.");
             }
         } catch (err) {
-            // Requirement 8.2, 8.3: Handle error response with user-friendly messages
             if (err instanceof ApiError) {
-                if (err.statusCode === 408) {
-                    setError(
-                        "Request timed out again. The generation is taking longer than expected. " +
-                        "Please try again later or simplify your prompt."
-                    );
-                } else if (err.message.includes("Network error")) {
-                    setError(
-                        "Network error. Please check your internet connection and try again."
-                    );
-                } else {
-                    setError(err.message);
-                }
-            } else if (err instanceof Error) {
                 setError(err.message);
             } else {
-                setError("An unexpected error occurred during retry. Please try again.");
+                setError("An unexpected error occurred. Please try again.");
             }
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Accordion layout will be implemented in subtask 9.4
-    // Generate button and results display will be implemented in subtask 9.5
+    // Navigation handlers
+    const handleNext = () => {
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(currentStep + 1);
+        }
+    };
+
+    const handlePrevious = () => {
+        if (currentStep > 0) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
+
+    const handleStepClick = (stepIndex: number) => {
+        setCurrentStep(stepIndex);
+    };
+
+    // Render current step content
+    const renderStepContent = () => {
+        switch (currentStep) {
+            case 0:
+                return (
+                    <SceneStyleSection
+                        values={{
+                            short_description: structuredPrompt.short_description,
+                            background_setting: structuredPrompt.background_setting,
+                            style_medium: structuredPrompt.style_medium,
+                            artistic_style: structuredPrompt.artistic_style,
+                            context: structuredPrompt.context,
+                        }}
+                        onChange={(field, value) => handleFieldChange(field as keyof StructuredPrompt, value)}
+                        errors={{
+                            short_description: validationErrors.short_description,
+                            background_setting: validationErrors.background_setting,
+                        }}
+                    />
+                );
+            case 1:
+                return (
+                    <LightingSection
+                        values={structuredPrompt.lighting}
+                        onChange={(field, value) => handleLightingChange(field as keyof StructuredPrompt["lighting"], value)}
+                        errors={validationErrors.lighting}
+                    />
+                );
+            case 2:
+                return (
+                    <AestheticsSection
+                        values={structuredPrompt.aesthetics}
+                        onChange={(field, value) => handleAestheticsChange(field as keyof StructuredPrompt["aesthetics"], value)}
+                        errors={validationErrors.aesthetics}
+                    />
+                );
+            case 3:
+                return (
+                    <CameraSection
+                        values={structuredPrompt.photographic_characteristics}
+                        onChange={(field, value) => handleCameraChange(field as keyof StructuredPrompt["photographic_characteristics"], value)}
+                        errors={validationErrors.photographic_characteristics}
+                    />
+                );
+            case 4:
+                return (
+                    <ObjectBuilderSection
+                        objects={structuredPrompt.objects}
+                        onAddObject={handleAddObject}
+                        onRemoveObject={handleRemoveObject}
+                        onObjectChange={(id, field, value) => handleObjectFieldChange(id, field as keyof ObjectDefinition, value)}
+                    />
+                );
+            case 5:
+                return (
+                    <div className="space-y-6">
+                        <div className="prose prose-sm max-w-none">
+                            <h3 className="text-lg font-semibold mb-4">Review Your Configuration</h3>
+                            <div className="space-y-4 text-sm">
+                                <div>
+                                    <strong>Scene:</strong> {structuredPrompt.short_description || "Not set"}
+                                </div>
+                                <div>
+                                    <strong>Background:</strong> {structuredPrompt.background_setting || "Not set"}
+                                </div>
+                                <div>
+                                    <strong>Lighting:</strong> {structuredPrompt.lighting.conditions || "Not set"}
+                                </div>
+                                <div>
+                                    <strong>Composition:</strong> {structuredPrompt.aesthetics.composition || "Not set"}
+                                </div>
+                                <div>
+                                    <strong>Camera Angle:</strong>{" "}
+                                    {structuredPrompt.photographic_characteristics.camera_angle || "Not set"}
+                                </div>
+                                <div>
+                                    <strong>Objects:</strong> {structuredPrompt.objects.length} object(s) defined
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Generate Button */}
+                        <Button
+                            onClick={handleGenerate}
+                            disabled={isLoading}
+                            className="w-full min-h-[44px]"
+                            size="lg"
+                            aria-label="Generate image with structured prompt"
+                        >
+                            {isLoading ? "Generating..." : "Generate Image"}
+                        </Button>
+
+                        {/* Loading State */}
+                        {isLoading && (
+                            <div className="text-center" aria-live="polite" aria-atomic="true">
+                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
+                                <p className="text-sm text-muted-foreground">
+                                    Generating your image... This may take up to 2 minutes.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Success Display */}
+                        {generatedImageUrl && !isLoading && (
+                            <div className="space-y-4" aria-live="polite" aria-atomic="true">
+                                <h2 className="text-xl font-semibold text-center">
+                                    Your Generated Image
+                                </h2>
+                                <div className="border rounded-lg overflow-hidden bg-muted">
+                                    <img
+                                        src={generatedImageUrl}
+                                        alt="Generated product image based on your structured prompt"
+                                        className="w-full h-auto"
+                                    />
+                                </div>
+                                <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => window.open(generatedImageUrl, "_blank")}
+                                        aria-label="Open generated image in new tab"
+                                        className="min-h-[44px]"
+                                    >
+                                        Open in New Tab
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setGeneratedImageUrl(null);
+                                            setError(null);
+                                            setCurrentStep(0);
+                                        }}
+                                        aria-label="Clear result and generate another image"
+                                        className="min-h-[44px]"
+                                    >
+                                        Generate Another
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Error Display */}
+                        {error && !isLoading && (
+                            <div aria-live="assertive" aria-atomic="true">
+                                <Alert variant="destructive">
+                                    <AlertDescription className="text-sm sm:text-base">
+                                        <strong>Error:</strong> {error}
+                                    </AlertDescription>
+                                </Alert>
+                                <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                                    {lastPayload && !error.includes("fill in all required fields") && (
+                                        <Button
+                                            variant="default"
+                                            onClick={handleRetry}
+                                            aria-label="Retry image generation"
+                                            className="min-h-[44px]"
+                                        >
+                                            {retryCount > 0 ? `Retry (Attempt ${retryCount + 1})` : "Retry"}
+                                        </Button>
+                                    )}
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setError(null);
+                                            setValidationErrors({});
+                                        }}
+                                        aria-label="Dismiss error message"
+                                        className="min-h-[44px]"
+                                    >
+                                        Dismiss
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
 
     return (
-        <div className="container mx-auto py-4 px-4 sm:py-6 md:py-8 pro-mode-form">
-            {/* Requirement 10.2: Skip to content link for keyboard navigation */}
-            <a href="#pro-mode-form-content" className="skip-to-content">
-                Skip to form content
-            </a>
-
-            <div className="max-w-4xl mx-auto">
-                {/* Requirement 10.1: Main heading with proper semantic structure */}
-                <header role="banner" className="mb-4 sm:mb-6">
-                    <h1 className="text-2xl sm:text-3xl font-bold mb-2" id="pro-mode-title">Pro Mode</h1>
-                    <p className="text-sm sm:text-base text-muted-foreground" id="pro-mode-description">
-                        Build structured prompts with granular control over every aspect of image generation
-                    </p>
-                </header>
-
-                {/* Requirement 1.1, 1.2, 1.3: Accordion layout with five sections */}
-                {/* Requirement 10.2: Keyboard navigation support for accordion sections */}
-                {/* Requirement 10.1: Proper ARIA labeling for form sections */}
-                <form
-                    id="pro-mode-form-content"
-                    onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}
-                    aria-labelledby="pro-mode-title"
-                    aria-describedby="pro-mode-description"
-                >
-                    <Accordion
-                        type="single"
-                        collapsible
-                        defaultValue="scene-style"
-                        className="w-full space-y-3 sm:space-y-4"
-                        aria-labelledby="pro-mode-title"
-                        role="region"
-                        aria-label="Pro Mode form sections"
-                    >
-                        {/* Requirement 1.2: Scene & Style Section (default open) */}
-                        {/* Requirement 10.1: ARIA labels for accordion sections */}
-                        <AccordionItem value="scene-style" className="border rounded-lg px-4 sm:px-6">
-                            <AccordionTrigger
-                                className="text-base sm:text-lg font-semibold py-4"
-                                aria-label="Scene and Style section"
-                                aria-controls="scene-style-content"
-                            >
-                                Scene & Style
-                            </AccordionTrigger>
-                            <AccordionContent id="scene-style-content" role="region" aria-label="Scene and Style form fields">
-                                <SceneStyleSection
-                                    values={{
-                                        short_description: structuredPrompt.short_description,
-                                        background_setting: structuredPrompt.background_setting,
-                                        style_medium: structuredPrompt.style_medium,
-                                        artistic_style: structuredPrompt.artistic_style,
-                                        context: structuredPrompt.context,
-                                    }}
-                                    onChange={handleFieldChange}
-                                    errors={{
-                                        short_description: validationErrors.short_description,
-                                        background_setting: validationErrors.background_setting,
-                                        style_medium: validationErrors.style_medium,
-                                        artistic_style: validationErrors.artistic_style,
-                                        context: validationErrors.context,
-                                    }}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-
-                        {/* Requirement 1.2: Lighting Section */}
-                        {/* Requirement 10.1: ARIA labels for accordion sections */}
-                        <AccordionItem value="lighting" className="border rounded-lg px-4 sm:px-6">
-                            <AccordionTrigger
-                                className="text-base sm:text-lg font-semibold py-4"
-                                aria-label="Lighting section"
-                                aria-controls="lighting-content"
-                            >
-                                Lighting
-                            </AccordionTrigger>
-                            <AccordionContent id="lighting-content" role="region" aria-label="Lighting form fields">
-                                <LightingSection
-                                    values={structuredPrompt.lighting}
-                                    onChange={handleLightingChange}
-                                    errors={validationErrors.lighting}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-
-                        {/* Requirement 1.2: Aesthetics Section */}
-                        {/* Requirement 10.1: ARIA labels for accordion sections */}
-                        <AccordionItem value="aesthetics" className="border rounded-lg px-4 sm:px-6">
-                            <AccordionTrigger
-                                className="text-base sm:text-lg font-semibold py-4"
-                                aria-label="Aesthetics section"
-                                aria-controls="aesthetics-content"
-                            >
-                                Aesthetics
-                            </AccordionTrigger>
-                            <AccordionContent id="aesthetics-content" role="region" aria-label="Aesthetics form fields">
-                                <AestheticsSection
-                                    values={structuredPrompt.aesthetics}
-                                    onChange={handleAestheticsChange}
-                                    errors={validationErrors.aesthetics}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-
-                        {/* Requirement 1.2: Camera Section */}
-                        {/* Requirement 10.1: ARIA labels for accordion sections */}
-                        <AccordionItem value="camera" className="border rounded-lg px-4 sm:px-6">
-                            <AccordionTrigger
-                                className="text-base sm:text-lg font-semibold py-4"
-                                aria-label="Camera section"
-                                aria-controls="camera-content"
-                            >
-                                Camera
-                            </AccordionTrigger>
-                            <AccordionContent id="camera-content" role="region" aria-label="Camera form fields">
-                                <CameraSection
-                                    values={structuredPrompt.photographic_characteristics}
-                                    onChange={handleCameraChange}
-                                    errors={validationErrors.photographic_characteristics}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-
-                        {/* Requirement 1.2: Object Builder Section */}
-                        {/* Requirement 10.1: ARIA labels for accordion sections */}
-                        <AccordionItem value="object-builder" className="border rounded-lg px-4 sm:px-6">
-                            <AccordionTrigger
-                                className="text-base sm:text-lg font-semibold py-4"
-                                aria-label="Object Builder section"
-                                aria-controls="object-builder-content"
-                            >
-                                Object Builder
-                            </AccordionTrigger>
-                            <AccordionContent id="object-builder-content" role="region" aria-label="Object Builder form fields">
-                                <ObjectBuilderSection
-                                    objects={structuredPrompt.objects}
-                                    onAddObject={handleAddObject}
-                                    onRemoveObject={handleRemoveObject}
-                                    onObjectChange={handleObjectFieldChange}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-
-                    {/* Requirement 1.5, 7.1: Generate Image button */}
-                    {/* Requirement 10.3: Visible focus indicators for keyboard navigation */}
-                    {/* Requirement 10.5: Minimum 44px touch targets on mobile */}
-                    <div className="mt-6 sm:mt-8 flex justify-center">
-                        <Button
-                            type="submit"
-                            disabled={isLoading}
-                            size="lg"
-                            className="w-full sm:w-auto sm:min-w-[200px] min-h-[44px]"
-                            aria-label="Generate image from structured prompt"
-                            aria-describedby={isLoading ? "generation-status" : undefined}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <span className="mr-2">Generating...</span>
-                                    <span className="animate-spin" aria-hidden="true">⏳</span>
-                                </>
-                            ) : (
-                                "Generate Image"
-                            )}
-                        </Button>
-                    </div>
-                </form>
-
-                {/* Requirement 8.1, 8.2, 10.3: Loading state display with ARIA live region */}
-                {isLoading && (
-                    <div
-                        className="mt-4 sm:mt-6 text-center px-4"
-                        role="status"
-                        aria-live="polite"
-                        aria-atomic="true"
-                        id="generation-status"
-                    >
-                        <p className="text-sm sm:text-base text-muted-foreground">
-                            Please wait while we generate your image. This may take up to 2 minutes...
-                        </p>
-                    </div>
-                )}
-
-                {/* Requirement 8.3, 8.4, 10.3: Success - Display generated image with ARIA live region */}
-                {generatedImageUrl && !isLoading && (
-                    <div
-                        className="mt-6 sm:mt-8 space-y-4"
-                        role="region"
-                        aria-live="polite"
-                        aria-atomic="true"
-                        aria-labelledby="result-heading"
-                    >
-                        <h2 className="text-xl sm:text-2xl font-semibold text-center" id="result-heading">
-                            Generated Image
-                        </h2>
-                        <div className="border rounded-lg overflow-hidden bg-muted">
-                            <img
-                                src={generatedImageUrl}
-                                alt="Generated product image based on your structured prompt"
-                                className="w-full h-auto"
+        <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-2xl sm:text-3xl">Pro Mode - Structured Prompt Builder</CardTitle>
+                    <CardDescription>
+                        Create detailed product images with granular control over every aspect
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {/* Step Indicator */}
+                    <div className="mb-8">
+                        <div className="flex items-center justify-between mb-4">
+                            {steps.map((step, index) => (
+                                <button
+                                    key={step.id}
+                                    onClick={() => handleStepClick(index)}
+                                    className={`flex-1 text-center transition-all ${index === currentStep
+                                        ? "text-primary font-semibold"
+                                        : index < currentStep
+                                            ? "text-muted-foreground hover:text-foreground cursor-pointer"
+                                            : "text-muted-foreground/50"
+                                        }`}
+                                    aria-label={`Go to step ${index + 1}: ${step.title}`}
+                                    aria-current={index === currentStep ? "step" : undefined}
+                                >
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${index === currentStep
+                                                ? "bg-primary text-primary-foreground"
+                                                : index < currentStep
+                                                    ? "bg-primary/20 text-primary"
+                                                    : "bg-muted text-muted-foreground"
+                                                }`}
+                                        >
+                                            {index + 1}
+                                        </div>
+                                        <span className="text-xs hidden sm:block">{step.title}</span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                                className="absolute top-0 left-0 h-full bg-primary transition-all duration-300"
+                                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
                             />
                         </div>
-                        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => window.open(generatedImageUrl, "_blank")}
-                                aria-label="Open generated image in new tab"
-                                className="min-h-[44px]"
-                            >
-                                Open in New Tab
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setGeneratedImageUrl(null);
-                                    setError(null);
-                                }}
-                                aria-label="Clear result and generate another image"
-                                className="min-h-[44px]"
-                            >
-                                Generate Another
-                            </Button>
-                        </div>
                     </div>
-                )}
 
-                {/* Requirement 8.5, 10.3: Error display with ARIA live region and retry functionality */}
-                {error && !isLoading && (
-                    <div
-                        className="mt-6 sm:mt-8"
-                        aria-live="assertive"
-                        aria-atomic="true"
-                    >
-                        <Alert variant="destructive">
-                            <AlertDescription className="text-sm sm:text-base">
-                                <strong>Error:</strong> {error}
-                            </AlertDescription>
-                        </Alert>
-                        <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-                            {/* Requirement 8.4: Retry functionality for failed generations */}
-                            {lastPayload && !error.includes("fill in all required fields") && (
-                                <Button
-                                    variant="default"
-                                    onClick={handleRetry}
-                                    aria-label="Retry image generation"
-                                    className="min-h-[44px]"
-                                >
-                                    {retryCount > 0 ? `Retry (Attempt ${retryCount + 1})` : "Retry"}
-                                </Button>
-                            )}
+                    {/* Current Step Title and Description */}
+                    <div className="mb-6">
+                        <h2 className="text-xl font-semibold mb-2">{steps[currentStep].title}</h2>
+                        <p className="text-sm text-muted-foreground">{steps[currentStep].description}</p>
+                    </div>
+
+                    {/* Step Content */}
+                    <div className="min-h-[400px] mb-8">{renderStepContent()}</div>
+
+                    {/* Navigation Buttons */}
+                    {currentStep < 5 && (
+                        <div className="flex justify-between gap-4">
                             <Button
                                 variant="outline"
-                                onClick={() => {
-                                    setError(null);
-                                    setValidationErrors({});
-                                }}
-                                aria-label="Dismiss error message"
+                                onClick={handlePrevious}
+                                disabled={currentStep === 0}
                                 className="min-h-[44px]"
+                                aria-label="Go to previous step"
                             >
-                                Dismiss
+                                Previous
+                            </Button>
+                            <Button
+                                onClick={handleNext}
+                                className="min-h-[44px]"
+                                aria-label="Go to next step"
+                            >
+                                {currentStep === steps.length - 2 ? "Review & Generate" : "Next"}
                             </Button>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+
+                    {currentStep === 5 && (
+                        <div className="flex justify-start">
+                            <Button
+                                variant="outline"
+                                onClick={handlePrevious}
+                                className="min-h-[44px]"
+                                aria-label="Go to previous step"
+                            >
+                                Previous
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

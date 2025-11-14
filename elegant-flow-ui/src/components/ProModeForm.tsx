@@ -7,8 +7,10 @@ import { LightingSection } from "./pro-mode/LightingSection";
 import { AestheticsSection } from "./pro-mode/AestheticsSection";
 import { CameraSection } from "./pro-mode/CameraSection";
 import { ObjectBuilderSection } from "./pro-mode/ObjectBuilderSection";
+import { PhotographyModeSection } from "./pro-mode/PhotographyModeSection";
 import { generateProMode, ApiError } from "@/lib/api";
 import type { StructuredPrompt, ObjectDefinition } from "@/lib/types";
+import { getModeById } from "@/constants/photographyModes";
 import "../styles/pro-mode-accessibility.css";
 
 /**
@@ -79,6 +81,9 @@ export function ProModeForm() {
         objects: [],
     });
 
+    // Photography mode state
+    const [photographyMode, setPhotographyMode] = useState<string | null>(null);
+
     // Wizard navigation state
     const [currentStep, setCurrentStep] = useState(0);
 
@@ -96,6 +101,11 @@ export function ProModeForm() {
             id: "scene",
             title: "Scene & Style",
             description: "Define the overall scene and artistic direction",
+        },
+        {
+            id: "photography",
+            title: "Photography Mode",
+            description: "Select professional photography style (optional)",
         },
         {
             id: "lighting",
@@ -293,9 +303,19 @@ export function ProModeForm() {
             // Requirement 7.6: Remove client-side 'id' field from objects
             const cleanedObjects = structuredPrompt.objects.map(({ id, ...rest }) => rest);
 
+            // Add photography mode to context if selected
+            let enhancedContext = structuredPrompt.context;
+            if (photographyMode && photographyMode !== 'none') {
+                const mode = getModeById(photographyMode);
+                if (mode) {
+                    enhancedContext = `${structuredPrompt.context}\n\nPhotography Style: ${mode.promptAddition}`;
+                }
+            }
+
             const payload = {
                 structured_prompt: {
                     ...structuredPrompt,
+                    context: enhancedContext,
                     objects: cleanedObjects,
                 },
                 seed,
@@ -391,13 +411,20 @@ export function ProModeForm() {
                 );
             case 1:
                 return (
+                    <PhotographyModeSection
+                        selectedMode={photographyMode}
+                        onChange={setPhotographyMode}
+                    />
+                );
+            case 2:
+                return (
                     <LightingSection
                         values={structuredPrompt.lighting}
                         onChange={(field, value) => handleLightingChange(field as keyof StructuredPrompt["lighting"], value)}
                         errors={validationErrors.lighting}
                     />
                 );
-            case 2:
+            case 3:
                 return (
                     <AestheticsSection
                         values={structuredPrompt.aesthetics}
@@ -405,7 +432,7 @@ export function ProModeForm() {
                         errors={validationErrors.aesthetics}
                     />
                 );
-            case 3:
+            case 4:
                 return (
                     <CameraSection
                         values={structuredPrompt.photographic_characteristics}
@@ -413,7 +440,7 @@ export function ProModeForm() {
                         errors={validationErrors.photographic_characteristics}
                     />
                 );
-            case 4:
+            case 5:
                 return (
                     <ObjectBuilderSection
                         objects={structuredPrompt.objects}
@@ -422,7 +449,7 @@ export function ProModeForm() {
                         onObjectChange={(id, field, value) => handleObjectFieldChange(id, field as keyof ObjectDefinition, value)}
                     />
                 );
-            case 5:
+            case 6:
                 return (
                     <div className="space-y-6">
                         <div className="prose prose-sm max-w-none">
@@ -447,6 +474,11 @@ export function ProModeForm() {
                                 <div>
                                     <strong>Objects:</strong> {structuredPrompt.objects.length} object(s) defined
                                 </div>
+                                {photographyMode && photographyMode !== 'none' && (
+                                    <div>
+                                        <strong>Photography Mode:</strong> {getModeById(photographyMode)?.name || 'None'}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -609,7 +641,7 @@ export function ProModeForm() {
                     <div className="min-h-[400px] mb-8">{renderStepContent()}</div>
 
                     {/* Navigation Buttons */}
-                    {currentStep < 5 && (
+                    {currentStep < 6 && (
                         <div className="flex justify-between gap-4">
                             <Button
                                 variant="outline"
@@ -630,7 +662,7 @@ export function ProModeForm() {
                         </div>
                     )}
 
-                    {currentStep === 5 && (
+                    {currentStep === 6 && (
                         <div className="flex justify-start">
                             <Button
                                 variant="outline"

@@ -77,7 +77,7 @@ Analyze the image carefully and fill in each field with accurate, detailed descr
 
     try:
         # Use Gemini Vision model
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.5-flash')
 
         # Create image part
         image_part = {

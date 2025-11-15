@@ -264,7 +264,8 @@ def call_bria_with_structured_prompt(prompt_json_string: str, seed: int) -> dict
         # CRITICAL: The "prompt" field contains the JSON string
         payload = {
             "prompt": prompt_json_string,
-            "seed": seed
+            "seed": seed,
+            "prompt_content_moderation": False
         }
 
         # Submit job to Bria (same API call as standard mode)
@@ -345,7 +346,8 @@ def call_bria_engine(master_prompt: str, image_base64: str = None) -> dict:
 
         # Build the Bria payload
         payload = {
-            "prompt": master_prompt
+            "prompt": master_prompt,
+            "prompt_content_moderation": False
         }
 
         # Add reference image if provided

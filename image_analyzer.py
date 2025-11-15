@@ -70,8 +70,20 @@ You must respond with ONLY a valid JSON object (no markdown, no explanations) wi
     "depth_of_field": "Focus range (e.g., 'Shallow depth of field with blurred background', 'Deep focus everything sharp', 'Medium depth')",
     "focus": "What's in focus (e.g., 'Product sharp, background soft', 'Everything in focus', 'Selective focus on details')"
   },
-  "objects": []
+  "objects": [
+    {
+      "description": "Brief description of the object (e.g., 'A red ceramic coffee mug')",
+      "location": "Where the object is positioned in the scene (e.g., 'Center foreground', 'Left side of frame', 'Background right')",
+      "relationship": "How this object relates to other objects or the scene (e.g., 'Sitting on the table', 'Next to the laptop', 'Floating above surface')",
+      "relative_size": "Size relative to other objects or frame (e.g., 'Large, occupying 40% of frame', 'Small accent piece', 'Medium-sized, proportional to hand')",
+      "shape_and_color": "Detailed shape and color description (e.g., 'Cylindrical shape, glossy crimson red with white rim')",
+      "texture": "Surface texture and material feel (e.g., 'Smooth glazed ceramic with slight sheen', 'Rough matte fabric', 'Polished metallic')",
+      "appearance_details": "Additional visual details (e.g., 'Brand logo on side, slight reflection on surface, steam rising from top')"
+    }
+  ]
 }
+
+IMPORTANT: For the "objects" array, if there are multiple distinct objects in the image, create a separate entry for each one with ALL seven fields filled in. If the image is a simple product shot with just one main product, you can leave the objects array empty [] since the product is already described in short_description.
 
 Analyze the image carefully and fill in each field with accurate, detailed descriptions. Be specific about colors, materials, lighting, and composition. The goal is to recreate this image as closely as possible using the structured prompt."""
 

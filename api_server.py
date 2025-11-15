@@ -95,7 +95,8 @@ def create_app():
     # - /api/generate (standard mode)
     # - /api/generate/pro (Pro Mode)
     # Automatically handles preflight OPTIONS requests
-    CORS(app, origins=["http://localhost:3000", "http://localhost:5173"])
+    CORS(app, origins=["http://localhost:3000",
+         "http://localhost:5173", "http://localhost:5174"])
 
     # Basic Flask configuration
     app.config['DEBUG'] = os.environ.get('FLASK_ENV') != 'production'
@@ -535,7 +536,7 @@ if __name__ == '__main__':
     # Log startup information
     app.logger.info(f"Starting Flask API server on {host}:{port}")
     app.logger.info(
-        f"CORS enabled for: http://localhost:3000, http://localhost:5173")
+        f"CORS enabled for: http://localhost:3000, http://localhost:5173, http://localhost:5174")
     app.logger.info(
         f"Endpoints: /api/generate (standard), /api/generate/pro (Pro Mode)")
     app.logger.info(

@@ -6,11 +6,25 @@ structured prompts that can be used in Pro Mode.
 
 import base64
 import json
+import os
 import google.generativeai as genai
-from config import GEMINI_API_KEY
+
+# Get API key from config or environment variable
+try:
+    from config import GEMINI_API_KEY
+    api_key = GEMINI_API_KEY
+except ImportError:
+    api_key = None
+
+if not api_key or api_key == "your_gemini_api_key_here":
+    api_key = os.environ.get('GOOGLE_API_KEY')
+
+if not api_key:
+    raise ValueError(
+        "Gemini API key not found. Set GOOGLE_API_KEY environment variable or configure in config.py")
 
 # Configure Gemini API
-genai.configure(api_key=GEMINI_API_KEY)
+genai.configure(api_key=api_key)
 
 
 def analyze_image_to_structured_prompt(image_base64: str) -> dict:

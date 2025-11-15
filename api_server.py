@@ -459,7 +459,15 @@ def health_check():
         "version": "1.0",
         "endpoints": {
             "standard": "/api/generate",
-            "pro_mode": "/api/generate/pro"
+            "pro_mode": "/api/generate/pro",
+            "image_analysis": "/api/analyze-image",
+            "edit_remove_background": "/api/edit/remove-background",
+            "edit_replace_background": "/api/edit/replace-background",
+            "edit_blur_background": "/api/edit/blur-background",
+            "edit_generative_fill": "/api/edit/generative-fill",
+            "edit_expand": "/api/edit/expand",
+            "edit_enhance": "/api/edit/enhance",
+            "edit_upscale": "/api/edit/upscale"
         }
     }), 200
 
@@ -596,6 +604,949 @@ def generate_pro_mode():
         # Unexpected server error
         app.logger.error(
             f"[Request {request_id}] Unexpected error in generate_pro_mode endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
+@app.route('/api/edit/remove-background', methods=['POST'])
+def edit_remove_background():
+    """Handle POST requests to remove background from an image.
+
+    Request Body:
+        {
+            "image": str,  # Required: Image URL or base64-encoded image
+            "preserve_alpha": bool  # Optional: Preserve alpha channel (default: true)
+        }
+
+    Returns:
+        Success (200): {"success": true, "result_url": "...", "original_url": "..."}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/edit/remove-background from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate required field: image
+        if 'image' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image"
+            }), 400
+
+        if not isinstance(data['image'], str) or not data['image'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image' must be a non-empty string"
+            }), 400
+
+        image = data['image']
+
+        # Log request details
+        image_preview = image[:50] + '...' if len(image) > 50 else image
+        app.logger.info(
+            f"[Request {request_id}] Removing background from image: {image_preview}")
+
+        # Call image_editor module
+        try:
+            from image_editor import remove_background
+            result = remove_background(image, sync=True)
+        except Exception as editor_error:
+            app.logger.error(
+                f"[Request {request_id}] Background removal failed: {str(editor_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Background removal failed: {str(editor_error)}"
+            }), 500
+
+        # Return response
+        if result.get('success'):
+            app.logger.info(
+                f"[Request {request_id}] Background removal completed successfully")
+            return jsonify(result), 200
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            app.logger.error(
+                f"[Request {request_id}] Background removal failed: {error_msg}")
+            return jsonify(result), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in edit_remove_background endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
+@app.route('/api/edit/replace-background', methods=['POST'])
+def edit_replace_background():
+    """Handle POST requests to replace background of an image.
+
+    Request Body:
+        {
+            "image": str,  # Required: Image URL or base64-encoded image
+            "background_prompt": str,  # Optional: Text description of desired background
+            "background_color": str  # Optional: Hex color code (e.g., "#FFFFFF")
+        }
+
+    Note: Either background_prompt or background_color must be provided.
+
+    Returns:
+        Success (200): {"success": true, "result_url": "..."}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/edit/replace-background from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate required field: image
+        if 'image' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image"
+            }), 400
+
+        if not isinstance(data['image'], str) or not data['image'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image' must be a non-empty string"
+            }), 400
+
+        # Validate that at least one of background_prompt or background_color is provided
+        background_prompt = data.get('background_prompt')
+        background_color = data.get('background_color')
+
+        if not background_prompt and not background_color:
+            app.logger.warning(
+                f"[Request {request_id}] Missing both background_prompt and background_color")
+            return jsonify({
+                "success": False,
+                "error": "Must provide either 'background_prompt' or 'background_color'"
+            }), 400
+
+        # Validate background_prompt if provided
+        if background_prompt is not None and (not isinstance(background_prompt, str) or not background_prompt.strip()):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid background_prompt field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'background_prompt' must be a non-empty string"
+            }), 400
+
+        # Validate background_color if provided
+        if background_color is not None and (not isinstance(background_color, str) or not background_color.strip()):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid background_color field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'background_color' must be a non-empty string"
+            }), 400
+
+        image = data['image']
+
+        # Log request details
+        image_preview = image[:50] + '...' if len(image) > 50 else image
+        prompt_info = f"prompt='{background_prompt[:30]}...'" if background_prompt else f"color={background_color}"
+        app.logger.info(
+            f"[Request {request_id}] Replacing background ({prompt_info}): {image_preview}")
+
+        # Call image_editor module
+        try:
+            from image_editor import replace_background
+            result = replace_background(
+                image,
+                background_prompt=background_prompt,
+                background_color=background_color,
+                sync=True
+            )
+        except Exception as editor_error:
+            app.logger.error(
+                f"[Request {request_id}] Background replacement failed: {str(editor_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Background replacement failed: {str(editor_error)}"
+            }), 500
+
+        # Return response
+        if result.get('success'):
+            app.logger.info(
+                f"[Request {request_id}] Background replacement completed successfully")
+            return jsonify(result), 200
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            app.logger.error(
+                f"[Request {request_id}] Background replacement failed: {error_msg}")
+            return jsonify(result), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in edit_replace_background endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
+@app.route('/api/edit/blur-background', methods=['POST'])
+def edit_blur_background():
+    """Handle POST requests to blur background of an image.
+
+    Request Body:
+        {
+            "image": str,  # Required: Image URL or base64-encoded image
+            "blur_strength": int  # Required: Blur strength (0-100)
+        }
+
+    Returns:
+        Success (200): {"success": true, "result_url": "..."}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/edit/blur-background from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate required field: image
+        if 'image' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image"
+            }), 400
+
+        if not isinstance(data['image'], str) or not data['image'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image' must be a non-empty string"
+            }), 400
+
+        # Validate required field: blur_strength
+        if 'blur_strength' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: blur_strength")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: blur_strength"
+            }), 400
+
+        if not isinstance(data['blur_strength'], int):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid blur_strength field type")
+            return jsonify({
+                "success": False,
+                "error": "Field 'blur_strength' must be an integer"
+            }), 400
+
+        blur_strength = data['blur_strength']
+
+        # Validate blur_strength range
+        if blur_strength < 0 or blur_strength > 100:
+            app.logger.warning(
+                f"[Request {request_id}] blur_strength out of range: {blur_strength}")
+            return jsonify({
+                "success": False,
+                "error": "Field 'blur_strength' must be between 0 and 100"
+            }), 400
+
+        image = data['image']
+
+        # Log request details
+        image_preview = image[:50] + '...' if len(image) > 50 else image
+        app.logger.info(
+            f"[Request {request_id}] Blurring background of image: {image_preview}, strength: {blur_strength}")
+
+        # Call image_editor module
+        try:
+            from image_editor import blur_background
+            result = blur_background(image, blur_strength, sync=True)
+        except Exception as editor_error:
+            app.logger.error(
+                f"[Request {request_id}] Background blur failed: {str(editor_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Background blur failed: {str(editor_error)}"
+            }), 500
+
+        # Return response
+        if result.get('success'):
+            app.logger.info(
+                f"[Request {request_id}] Background blur completed successfully")
+            return jsonify(result), 200
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            app.logger.error(
+                f"[Request {request_id}] Background blur failed: {error_msg}")
+            return jsonify(result), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in edit_blur_background endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
+@app.route('/api/edit/generative-fill', methods=['POST'])
+def edit_generative_fill():
+    """Handle POST requests to fill masked regions of an image using generative AI.
+
+    Request Body:
+        {
+            "image": str,  # Required: Image URL or base64-encoded image
+            "mask": str,  # Required: Mask image URL or base64-encoded mask
+            "prompt": str,  # Required: Text description of what to generate
+            "negative_prompt": str,  # Optional: Text description of what to avoid
+            "version": int  # Optional: API version (1 or 2, default: 2)
+        }
+
+    Returns:
+        Success (200): {"success": true, "result_url": "...", "refined_prompt": "..." (v2 only)}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/edit/generative-fill from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate required field: image
+        if 'image' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image"
+            }), 400
+
+        if not isinstance(data['image'], str) or not data['image'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image' must be a non-empty string"
+            }), 400
+
+        # Validate required field: mask
+        if 'mask' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: mask")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: mask"
+            }), 400
+
+        if not isinstance(data['mask'], str) or not data['mask'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid mask field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'mask' must be a non-empty string"
+            }), 400
+
+        # Validate required field: prompt
+        if 'prompt' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: prompt")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: prompt"
+            }), 400
+
+        if not isinstance(data['prompt'], str) or not data['prompt'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid prompt field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'prompt' must be a non-empty string"
+            }), 400
+
+        # Extract required fields
+        image = data['image']
+        mask = data['mask']
+        prompt = data['prompt']
+
+        # Extract optional fields
+        negative_prompt = data.get('negative_prompt')
+        version = data.get('version', 2)
+
+        # Validate negative_prompt if provided
+        if negative_prompt is not None and (not isinstance(negative_prompt, str) or not negative_prompt.strip()):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid negative_prompt field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'negative_prompt' must be a non-empty string if provided"
+            }), 400
+
+        # Validate version if provided
+        if not isinstance(version, int) or version not in [1, 2]:
+            app.logger.warning(
+                f"[Request {request_id}] Invalid version field: {version}")
+            return jsonify({
+                "success": False,
+                "error": "Field 'version' must be 1 or 2"
+            }), 400
+
+        # Log request details
+        image_preview = image[:50] + '...' if len(image) > 50 else image
+        mask_preview = mask[:50] + '...' if len(mask) > 50 else mask
+        prompt_preview = prompt[:50] + '...' if len(prompt) > 50 else prompt
+        app.logger.info(
+            f"[Request {request_id}] Generative fill - Image: {image_preview}, "
+            f"Mask: {mask_preview}, Prompt: '{prompt_preview}', Version: {version}")
+
+        # Call image_editor module
+        try:
+            from image_editor import generative_fill
+            result = generative_fill(
+                image,
+                mask,
+                prompt,
+                negative_prompt=negative_prompt,
+                version=version,
+                sync=True
+            )
+        except Exception as editor_error:
+            app.logger.error(
+                f"[Request {request_id}] Generative fill failed: {str(editor_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Generative fill failed: {str(editor_error)}"
+            }), 500
+
+        # Return response
+        if result.get('success'):
+            app.logger.info(
+                f"[Request {request_id}] Generative fill completed successfully")
+            return jsonify(result), 200
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            app.logger.error(
+                f"[Request {request_id}] Generative fill failed: {error_msg}")
+            return jsonify(result), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in edit_generative_fill endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
+@app.route('/api/edit/expand', methods=['POST'])
+def edit_expand():
+    """Handle POST requests to expand the canvas of an image to new dimensions.
+
+    Request Body:
+        {
+            "image": str,  # Required: Image URL or base64-encoded image
+            "target_width": int,  # Required: Target width in pixels
+            "target_height": int,  # Required: Target height in pixels
+            "prompt": str  # Optional: Text description to guide expansion
+        }
+
+    Returns:
+        Success (200): {"success": true, "result_url": "..."}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/edit/expand from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate required field: image
+        if 'image' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image"
+            }), 400
+
+        if not isinstance(data['image'], str) or not data['image'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image' must be a non-empty string"
+            }), 400
+
+        # Validate required field: target_width
+        if 'target_width' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: target_width")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: target_width"
+            }), 400
+
+        if not isinstance(data['target_width'], int):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid target_width field type")
+            return jsonify({
+                "success": False,
+                "error": "Field 'target_width' must be an integer"
+            }), 400
+
+        # Validate required field: target_height
+        if 'target_height' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: target_height")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: target_height"
+            }), 400
+
+        if not isinstance(data['target_height'], int):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid target_height field type")
+            return jsonify({
+                "success": False,
+                "error": "Field 'target_height' must be an integer"
+            }), 400
+
+        # Extract required fields
+        image = data['image']
+        target_width = data['target_width']
+        target_height = data['target_height']
+
+        # Validate dimensions are positive
+        if target_width <= 0:
+            app.logger.warning(
+                f"[Request {request_id}] Invalid target_width: {target_width}")
+            return jsonify({
+                "success": False,
+                "error": "Field 'target_width' must be greater than 0"
+            }), 400
+
+        if target_height <= 0:
+            app.logger.warning(
+                f"[Request {request_id}] Invalid target_height: {target_height}")
+            return jsonify({
+                "success": False,
+                "error": "Field 'target_height' must be greater than 0"
+            }), 400
+
+        # Extract optional field: prompt
+        prompt = data.get('prompt')
+
+        # Validate prompt if provided
+        if prompt is not None and (not isinstance(prompt, str) or not prompt.strip()):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid prompt field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'prompt' must be a non-empty string if provided"
+            }), 400
+
+        # Log request details
+        image_preview = image[:50] + '...' if len(image) > 50 else image
+        prompt_info = f"with prompt '{prompt[:30]}...'" if prompt and len(
+            prompt) > 30 else f"with prompt '{prompt}'" if prompt else "without prompt"
+        app.logger.info(
+            f"[Request {request_id}] Expanding canvas - Image: {image_preview}, "
+            f"Target: {target_width}x{target_height}, {prompt_info}")
+
+        # Call image_editor module
+        try:
+            from image_editor import expand_image
+            result = expand_image(
+                image,
+                target_width,
+                target_height,
+                prompt=prompt,
+                sync=True
+            )
+        except Exception as editor_error:
+            app.logger.error(
+                f"[Request {request_id}] Canvas expansion failed: {str(editor_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Canvas expansion failed: {str(editor_error)}"
+            }), 500
+
+        # Return response
+        if result.get('success'):
+            app.logger.info(
+                f"[Request {request_id}] Canvas expansion completed successfully")
+            return jsonify(result), 200
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            app.logger.error(
+                f"[Request {request_id}] Canvas expansion failed: {error_msg}")
+            return jsonify(result), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in edit_expand endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
+@app.route('/api/edit/enhance', methods=['POST'])
+def edit_enhance():
+    """Handle POST requests to enhance image quality.
+
+    Request Body:
+        {
+            "image": str  # Required: Image URL or base64-encoded image
+        }
+
+    Returns:
+        Success (200): {"success": true, "result_url": "..."}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/edit/enhance from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate required field: image
+        if 'image' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image"
+            }), 400
+
+        if not isinstance(data['image'], str) or not data['image'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image' must be a non-empty string"
+            }), 400
+
+        image = data['image']
+
+        # Log request details
+        image_preview = image[:50] + '...' if len(image) > 50 else image
+        app.logger.info(
+            f"[Request {request_id}] Enhancing image: {image_preview}")
+
+        # Call image_editor module
+        try:
+            from image_editor import enhance_image
+            result = enhance_image(image, sync=True)
+        except Exception as editor_error:
+            app.logger.error(
+                f"[Request {request_id}] Image enhancement failed: {str(editor_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Image enhancement failed: {str(editor_error)}"
+            }), 500
+
+        # Return response
+        if result.get('success'):
+            app.logger.info(
+                f"[Request {request_id}] Image enhancement completed successfully")
+            return jsonify(result), 200
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            app.logger.error(
+                f"[Request {request_id}] Image enhancement failed: {error_msg}")
+            return jsonify(result), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in edit_enhance endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
+@app.route('/api/edit/upscale', methods=['POST'])
+def edit_upscale():
+    """Handle POST requests to upscale image resolution.
+
+    Request Body:
+        {
+            "image": str,  # Required: Image URL or base64-encoded image
+            "scale_factor": int  # Required: Scale factor (2 or 4)
+        }
+
+    Returns:
+        Success (200): {"success": true, "result_url": "..."}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/edit/upscale from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate required field: image
+        if 'image' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image"
+            }), 400
+
+        if not isinstance(data['image'], str) or not data['image'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image' must be a non-empty string"
+            }), 400
+
+        # Validate required field: scale_factor
+        if 'scale_factor' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: scale_factor")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: scale_factor"
+            }), 400
+
+        if not isinstance(data['scale_factor'], int):
+            app.logger.warning(
+                f"[Request {request_id}] Invalid scale_factor field type")
+            return jsonify({
+                "success": False,
+                "error": "Field 'scale_factor' must be an integer"
+            }), 400
+
+        scale_factor = data['scale_factor']
+
+        # Validate scale_factor value
+        if scale_factor not in [2, 4]:
+            app.logger.warning(
+                f"[Request {request_id}] Invalid scale_factor value: {scale_factor}")
+            return jsonify({
+                "success": False,
+                "error": "Field 'scale_factor' must be 2 or 4"
+            }), 400
+
+        image = data['image']
+
+        # Log request details
+        image_preview = image[:50] + '...' if len(image) > 50 else image
+        app.logger.info(
+            f"[Request {request_id}] Upscaling image: {image_preview}, scale: {scale_factor}x")
+
+        # Call image_editor module
+        try:
+            from image_editor import increase_resolution
+            result = increase_resolution(image, scale_factor, sync=True)
+        except Exception as editor_error:
+            app.logger.error(
+                f"[Request {request_id}] Image upscaling failed: {str(editor_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Image upscaling failed: {str(editor_error)}"
+            }), 500
+
+        # Return response
+        if result.get('success'):
+            app.logger.info(
+                f"[Request {request_id}] Image upscaling completed successfully")
+            return jsonify(result), 200
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            app.logger.error(
+                f"[Request {request_id}] Image upscaling failed: {error_msg}")
+            return jsonify(result), 500
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in edit_upscale endpoint: {str(e)}",
             exc_info=True
         )
         return jsonify({

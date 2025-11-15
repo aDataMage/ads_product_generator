@@ -153,3 +153,135 @@ export interface ProModeGenerateResponse {
     final_image_url?: string;
     error?: string;
 }
+
+/**
+ * Image Editing Types
+ * Requirements: Task 2.1 - Background Editor Component API integration
+ */
+
+/**
+ * Remove Background API Request
+ */
+export interface RemoveBackgroundRequest {
+    image: string; // URL or base64
+}
+
+/**
+ * Remove Background API Response
+ */
+export interface RemoveBackgroundResponse {
+    success: boolean;
+    result_url?: string;
+    original_url?: string;
+    error?: string;
+}
+
+/**
+ * Replace Background API Request
+ */
+export interface ReplaceBackgroundRequest {
+    image: string; // URL or base64
+    background_prompt?: string;
+    background_color?: string;
+}
+
+/**
+ * Replace Background API Response
+ */
+export interface ReplaceBackgroundResponse {
+    success: boolean;
+    result_url?: string;
+    error?: string;
+}
+
+/**
+ * Blur Background API Request
+ */
+export interface BlurBackgroundRequest {
+    image: string; // URL or base64
+    blur_strength: number; // 0-100
+}
+
+/**
+ * Blur Background API Response
+ */
+export interface BlurBackgroundResponse {
+    success: boolean;
+    result_url?: string;
+    error?: string;
+}
+
+/**
+ * Generative Fill API Request
+ */
+export interface GenerativeFillRequest {
+    image: string; // URL or base64
+    mask: string; // URL or base64 mask
+    prompt: string;
+    negative_prompt?: string;
+    version?: number; // 1 or 2, default: 2
+}
+
+/**
+ * Generative Fill API Response
+ */
+export interface GenerativeFillResponse {
+    success: boolean;
+    result_url?: string;
+    refined_prompt?: string; // Only in version 2
+    error?: string;
+}
+
+/**
+ * Enhance Image API Request
+ */
+export interface EnhanceImageRequest {
+    image: string; // URL or base64
+}
+
+/**
+ * Enhance Image API Response
+ */
+export interface EnhanceImageResponse {
+    success: boolean;
+    result_url?: string;
+    file_size_bytes?: number;
+    error?: string;
+}
+
+/**
+ * Upscale Image API Request
+ */
+export interface UpscaleImageRequest {
+    image: string; // URL or base64
+    scale_factor: number; // 2 or 4
+}
+
+/**
+ * Upscale Image API Response
+ */
+export interface UpscaleImageResponse {
+    success: boolean;
+    result_url?: string;
+    file_size_bytes?: number;
+    error?: string;
+}
+
+/**
+ * Expand Image API Request
+ */
+export interface ExpandImageRequest {
+    image: string; // URL or base64
+    target_width: number;
+    target_height: number;
+    prompt?: string; // Optional prompt for expansion context
+}
+
+/**
+ * Expand Image API Response
+ */
+export interface ExpandImageResponse {
+    success: boolean;
+    result_url?: string;
+    error?: string;
+}

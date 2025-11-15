@@ -3,15 +3,21 @@
  * 
  * Container for displaying generation status and results
  * Requirements: 2.2, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4, 8.5, 9.1, 9.2, 9.3, 9.4, 9.5, 10.2, 13.4
+ * Task 6.1: Integrate all editor components
  */
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Download, AlertCircle } from "lucide-react";
+import { Loader2, Download, AlertCircle, Edit, X } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getAnimationDuration } from "@/lib/utils";
+import { EditingToolbar, type EditingTool } from "./EditingToolbar";
+import { BackgroundEditor } from "./BackgroundEditor";
+import { GenerativeFillEditor } from "./GenerativeFillEditor";
+import { EnhancementEditor } from "./EnhancementEditor";
+import { CanvasExpander } from "./CanvasExpander";
 
 interface ResultsPanelProps {
     /** Whether image generation is in progress */
@@ -20,6 +26,8 @@ interface ResultsPanelProps {
     generatedImageUrl: string | null;
     /** Error message if generation failed */
     error: string | null;
+    /** Callback when Edit Image button is clicked */
+    onEditImage?: () => void;
 }
 
 /**
@@ -38,6 +46,7 @@ function ResultsPanel({
     isLoading,
     generatedImageUrl,
     error,
+    onEditImage,
 }: ResultsPanelProps) {
     return (
         // Requirement 12.3: Maintain usability on screens as small as 375px wide
@@ -124,7 +133,7 @@ function ResultsPanel({
                 {/* Success state - image generated successfully */}
                 {/* Requirements 8.1, 8.2, 8.3, 8.4, 8.5, 13.3 */}
                 {generatedImageUrl && (
-                    <SuccessState key="success" imageUrl={generatedImageUrl} />
+                    <SuccessState key="success" imageUrl={generatedImageUrl} onEditImage={onEditImage} />
                 )}
 
                 {/* Error state - generation failed */}
@@ -140,18 +149,28 @@ function ResultsPanel({
 /**
  * SuccessState component
  * 
- * Displays the generated image with download functionality
+ * Displays the generated image with download functionality and editing tools
  * Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 13.3
+ * Task 6.1: Integrate all editor components
  */
-function SuccessState({ imageUrl }: { imageUrl: string }) {
+function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage?: () => void }) {
     const downloadButtonRef = useRef<HTMLButtonElement>(null);
+    const [isEditingMode, setIsEditingMode] = useState(false);
+    const [selectedTool, setSelectedTool] = useState<EditingTool>(null);
+    const [currentImageUrl, setCurrentImageUrl] = useState(imageUrl);
+    const [editError, setEditError] = useState<string | null>(null);
 
     // Requirement 13.3: Implement focus management (focus download button on load)
     useEffect(() => {
-        if (downloadButtonRef.current) {
+        if (downloadButtonRef.current && !isEditingMode) {
             downloadButtonRef.current.focus();
         }
-    }, []);
+    }, [isEditingMode]);
+
+    // Update current image when original changes
+    useEffect(() => {
+        setCurrentImageUrl(imageUrl);
+    }, [imageUrl]);
 
     // Requirement 8.4: Implement download functionality with timestamped filename
     const handleDownload = () => {
@@ -160,12 +179,46 @@ function SuccessState({ imageUrl }: { imageUrl: string }) {
 
         // Create a temporary anchor element to trigger download
         const link = document.createElement('a');
-        link.href = imageUrl;
+        link.href = currentImageUrl;
         link.download = filename;
         link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    // Handle entering edit mode
+    const handleEnterEditMode = () => {
+        setIsEditingMode(true);
+        setEditError(null);
+        if (onEditImage) {
+            onEditImage();
+        }
+    };
+
+    // Handle exiting edit mode
+    const handleExitEditMode = () => {
+        setIsEditingMode(false);
+        setSelectedTool(null);
+        setEditError(null);
+    };
+
+    // Handle tool selection
+    const handleToolSelect = (tool: EditingTool) => {
+        setSelectedTool(tool);
+        setEditError(null);
+    };
+
+    // Handle edit completion
+    const handleEditComplete = (editedImageUrl: string) => {
+        setCurrentImageUrl(editedImageUrl);
+        setEditError(null);
+        // Keep editing mode active so user can continue editing
+    };
+
+    // Handle edit error
+    const handleEditError = (error: string) => {
+        setEditError(error);
     };
 
     return (
@@ -188,7 +241,7 @@ function SuccessState({ imageUrl }: { imageUrl: string }) {
                     <div className="w-full max-w-2xl">
                         {/* Requirement 15.2: Optimize image loading with lazy attribute */}
                         <img
-                            src={imageUrl}
+                            src={currentImageUrl}
                             alt="Generated product image"
                             className="w-full h-auto rounded-lg shadow-lg"
                             loading="lazy"
@@ -199,19 +252,106 @@ function SuccessState({ imageUrl }: { imageUrl: string }) {
                         </div>
                     </div>
 
-                    {/* Requirement 8.3: Add download button with shadcn/ui Button */}
-                    {/* Requirement 8.5: Add ARIA labels for button */}
-                    {/* Requirement 12.5: Adjust button size for mobile */}
-                    <Button
-                        ref={downloadButtonRef}
-                        onClick={handleDownload}
-                        size="lg"
-                        className="gap-2 w-full sm:w-auto"
-                        aria-label="Download generated image"
-                    >
-                        <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-                        Download Image
-                    </Button>
+                    {/* Editing Toolbar - Task 6.1 */}
+                    {isEditingMode && (
+                        <div className="w-full max-w-2xl space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">Edit Image</h3>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleExitEditMode}
+                                    aria-label="Close editing mode"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <EditingToolbar
+                                onToolSelect={handleToolSelect}
+                                selectedTool={selectedTool}
+                                disabled={false}
+                            />
+
+                            {/* Error Display */}
+                            {editError && (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Editing Error</AlertTitle>
+                                    <AlertDescription>{editError}</AlertDescription>
+                                </Alert>
+                            )}
+
+                            {/* Editor Components - Task 6.1 */}
+                            {selectedTool && (
+                                <div className="w-full">
+                                    {(selectedTool === 'background-remove' ||
+                                        selectedTool === 'background-replace' ||
+                                        selectedTool === 'background-blur') && (
+                                            <BackgroundEditor
+                                                imageUrl={currentImageUrl}
+                                                onEditComplete={handleEditComplete}
+                                                onError={handleEditError}
+                                            />
+                                        )}
+
+                                    {selectedTool === 'generative-fill' && (
+                                        <GenerativeFillEditor
+                                            imageUrl={currentImageUrl}
+                                            onResult={handleEditComplete}
+                                            className="w-full"
+                                        />
+                                    )}
+
+                                    {(selectedTool === 'enhance' || selectedTool === 'upscale') && (
+                                        <EnhancementEditor
+                                            imageUrl={currentImageUrl}
+                                            onEditComplete={handleEditComplete}
+                                            onError={handleEditError}
+                                        />
+                                    )}
+
+                                    {selectedTool === 'expand' && (
+                                        <CanvasExpander
+                                            imageUrl={currentImageUrl}
+                                            onEditComplete={handleEditComplete}
+                                            onError={handleEditError}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        {/* Edit Image button */}
+                        {!isEditingMode && (
+                            <Button
+                                onClick={handleEnterEditMode}
+                                size="lg"
+                                variant="outline"
+                                className="gap-2 w-full sm:w-auto"
+                                aria-label="Edit generated image"
+                            >
+                                <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
+                                Edit Image
+                            </Button>
+                        )}
+
+                        {/* Requirement 8.3: Add download button with shadcn/ui Button */}
+                        {/* Requirement 8.5: Add ARIA labels for button */}
+                        {/* Requirement 12.5: Adjust button size for mobile */}
+                        <Button
+                            ref={downloadButtonRef}
+                            onClick={handleDownload}
+                            size="lg"
+                            className="gap-2 w-full sm:w-auto"
+                            aria-label="Download generated image"
+                        >
+                            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                            Download Image
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
         </motion.div>

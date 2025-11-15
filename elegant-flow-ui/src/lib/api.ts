@@ -7,7 +7,21 @@ import type {
     GenerateImageRequest,
     GenerateImageResponse,
     ProModeGenerateRequest,
-    ProModeGenerateResponse
+    ProModeGenerateResponse,
+    RemoveBackgroundRequest,
+    RemoveBackgroundResponse,
+    ReplaceBackgroundRequest,
+    ReplaceBackgroundResponse,
+    BlurBackgroundRequest,
+    BlurBackgroundResponse,
+    GenerativeFillRequest,
+    GenerativeFillResponse,
+    EnhanceImageRequest,
+    EnhanceImageResponse,
+    UpscaleImageRequest,
+    UpscaleImageResponse,
+    ExpandImageRequest,
+    ExpandImageResponse
 } from './types';
 
 /**
@@ -307,5 +321,521 @@ export async function checkApiHealth(): Promise<boolean> {
         return response.ok;
     } catch {
         return false;
+    }
+}
+
+/**
+ * Image Editing API Functions
+ * Requirements: Task 2.1 - Background Editor Component API integration
+ */
+
+/**
+ * Remove background from an image
+ * 
+ * @param request - The remove background request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function removeBackground(
+    request: RemoveBackgroundRequest
+): Promise<RemoveBackgroundResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/edit/remove-background`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: RemoveBackgroundResponse = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Background removal failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Background removal is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
+ * Replace background of an image
+ * 
+ * @param request - The replace background request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function replaceBackground(
+    request: ReplaceBackgroundRequest
+): Promise<ReplaceBackgroundResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/edit/replace-background`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: ReplaceBackgroundResponse = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Background replacement failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Background replacement is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
+ * Blur background of an image
+ * 
+ * @param request - The blur background request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function blurBackground(
+    request: BlurBackgroundRequest
+): Promise<BlurBackgroundResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/edit/blur-background`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: BlurBackgroundResponse = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Background blur failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Background blur is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
+ * Generative fill for masked regions of an image
+ * 
+ * @param request - The generative fill request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function generativeFill(
+    request: GenerativeFillRequest
+): Promise<GenerativeFillResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/edit/generative-fill`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: GenerativeFillResponse = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Generative fill failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Generative fill is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
+ * Enhance image quality
+ * 
+ * @param request - The enhance image request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function enhanceImage(
+    request: EnhanceImageRequest
+): Promise<EnhanceImageResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/edit/enhance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: EnhanceImageResponse = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Image enhancement failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Image enhancement is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
+ * Upscale image resolution
+ * 
+ * @param request - The upscale image request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function upscaleImage(
+    request: UpscaleImageRequest
+): Promise<UpscaleImageResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/edit/upscale`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: UpscaleImageResponse = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Image upscaling failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Image upscaling is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
+ * Expand image canvas to new dimensions
+ * 
+ * @param request - The expand image request payload
+ * @returns Promise resolving to the API response
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function expandImage(
+    request: ExpandImageRequest
+): Promise<ExpandImageResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/edit/expand`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: ExpandImageResponse = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Canvas expansion failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Canvas expansion is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
     }
 }

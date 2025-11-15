@@ -352,6 +352,101 @@ def generate_image():
         }), 500
 
 
+@app.route('/api/analyze-image', methods=['POST'])
+def analyze_image():
+    """Handle POST requests to analyze an image and generate structured prompt.
+
+    Request Body:
+        {
+            "image_base64": str  # Required: Base64-encoded image
+        }
+
+    Returns:
+        Success (200): {"success": true, "structured_prompt": {...}}
+        Error (400/500): {"success": false, "error": "..."}
+    """
+    request_id = id(request)
+
+    try:
+        # Log incoming request
+        app.logger.info(
+            f"[Request {request_id}] Received POST /api/analyze-image from {request.remote_addr}")
+
+        # Parse incoming JSON request body
+        try:
+            data = request.get_json()
+            if data is None:
+                app.logger.warning(
+                    f"[Request {request_id}] Empty or invalid JSON body received")
+                return jsonify({
+                    "success": False,
+                    "error": "Request body must contain valid JSON"
+                }), 400
+        except Exception as e:
+            app.logger.error(
+                f"[Request {request_id}] JSON parsing error: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON body: {str(e)}"
+            }), 400
+
+        # Validate image_base64 field
+        if 'image_base64' not in data:
+            app.logger.warning(
+                f"[Request {request_id}] Missing required field: image_base64")
+            return jsonify({
+                "success": False,
+                "error": "Missing required field: image_base64"
+            }), 400
+
+        if not isinstance(data['image_base64'], str) or not data['image_base64'].strip():
+            app.logger.warning(
+                f"[Request {request_id}] Invalid image_base64 field")
+            return jsonify({
+                "success": False,
+                "error": "Field 'image_base64' must be a non-empty string"
+            }), 400
+
+        image_base64 = data['image_base64']
+
+        app.logger.info(
+            f"[Request {request_id}] Analyzing image ({len(image_base64)} chars)")
+
+        # Import and call image analyzer
+        try:
+            from image_analyzer import analyze_image_to_structured_prompt
+            structured_prompt = analyze_image_to_structured_prompt(
+                image_base64)
+        except Exception as analysis_error:
+            app.logger.error(
+                f"[Request {request_id}] Image analysis failed: {str(analysis_error)}",
+                exc_info=True
+            )
+            return jsonify({
+                "success": False,
+                "error": f"Image analysis failed: {str(analysis_error)}"
+            }), 500
+
+        app.logger.info(
+            f"[Request {request_id}] Image analysis completed successfully")
+
+        return jsonify({
+            "success": True,
+            "structured_prompt": structured_prompt
+        }), 200
+
+    except Exception as e:
+        # Unexpected server error
+        app.logger.error(
+            f"[Request {request_id}] Unexpected error in analyze_image endpoint: {str(e)}",
+            exc_info=True
+        )
+        return jsonify({
+            "success": False,
+            "error": "Internal server error occurred"
+        }), 500
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint for monitoring server status.

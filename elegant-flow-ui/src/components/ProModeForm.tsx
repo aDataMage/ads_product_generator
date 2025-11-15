@@ -8,6 +8,7 @@ import { AestheticsSection } from "./pro-mode/AestheticsSection";
 import { CameraSection } from "./pro-mode/CameraSection";
 import { ObjectBuilderSection } from "./pro-mode/ObjectBuilderSection";
 import { PhotographyModeSection } from "./pro-mode/PhotographyModeSection";
+import { ImageAnalyzer } from "./pro-mode/ImageAnalyzer";
 import { generateProMode, ApiError } from "@/lib/api";
 import type { StructuredPrompt, ObjectDefinition } from "@/lib/types";
 import { getModeById } from "@/constants/photographyModes";
@@ -95,8 +96,20 @@ export function ProModeForm() {
     const [lastPayload, setLastPayload] = useState<any>(null);
     const [retryCount, setRetryCount] = useState(0);
 
+    // Handler for image analysis completion
+    const handleImageAnalysis = (analyzedPrompt: StructuredPrompt) => {
+        setStructuredPrompt(analyzedPrompt);
+        // Move to next step after analysis
+        setCurrentStep(1);
+    };
+
     // Define wizard steps
     const steps = [
+        {
+            id: "analyze",
+            title: "Image Analysis",
+            description: "Upload an image to auto-generate prompt (optional)",
+        },
         {
             id: "scene",
             title: "Scene & Style",
@@ -396,6 +409,10 @@ export function ProModeForm() {
         switch (currentStep) {
             case 0:
                 return (
+                    <ImageAnalyzer onAnalysisComplete={handleImageAnalysis} />
+                );
+            case 1:
+                return (
                     <SceneStyleSection
                         values={{
                             short_description: structuredPrompt.short_description,
@@ -411,14 +428,14 @@ export function ProModeForm() {
                         }}
                     />
                 );
-            case 1:
+            case 2:
                 return (
                     <PhotographyModeSection
                         selectedMode={photographyMode}
                         onChange={setPhotographyMode}
                     />
                 );
-            case 2:
+            case 3:
                 return (
                     <LightingSection
                         values={structuredPrompt.lighting}
@@ -426,7 +443,7 @@ export function ProModeForm() {
                         errors={validationErrors.lighting}
                     />
                 );
-            case 3:
+            case 4:
                 return (
                     <AestheticsSection
                         values={structuredPrompt.aesthetics}
@@ -434,7 +451,7 @@ export function ProModeForm() {
                         errors={validationErrors.aesthetics}
                     />
                 );
-            case 4:
+            case 5:
                 return (
                     <CameraSection
                         values={structuredPrompt.photographic_characteristics}
@@ -442,7 +459,7 @@ export function ProModeForm() {
                         errors={validationErrors.photographic_characteristics}
                     />
                 );
-            case 5:
+            case 6:
                 return (
                     <ObjectBuilderSection
                         objects={structuredPrompt.objects}
@@ -451,7 +468,7 @@ export function ProModeForm() {
                         onObjectChange={(id, field, value) => handleObjectFieldChange(id, field as keyof ObjectDefinition, value)}
                     />
                 );
-            case 6:
+            case 7:
                 return (
                     <div className="space-y-6">
                         <div className="prose prose-sm max-w-none">
@@ -646,7 +663,7 @@ export function ProModeForm() {
                     <div className="min-h-[400px] mb-8">{renderStepContent()}</div>
 
                     {/* Navigation Buttons */}
-                    {currentStep < 6 && (
+                    {currentStep < 7 && (
                         <div className="flex justify-between gap-4">
                             <Button
                                 variant="outline"
@@ -662,12 +679,12 @@ export function ProModeForm() {
                                 className="min-h-[44px]"
                                 aria-label="Go to next step"
                             >
-                                {currentStep === steps.length - 2 ? "Review & Generate" : "Next"}
+                                {currentStep === steps.length - 2 ? "Review & Generate" : currentStep === 0 ? "Skip to Manual Entry" : "Next"}
                             </Button>
                         </div>
                     )}
 
-                    {currentStep === 6 && (
+                    {currentStep === 7 && (
                         <div className="flex justify-start">
                             <Button
                                 variant="outline"

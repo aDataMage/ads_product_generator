@@ -218,6 +218,81 @@ export async function generateProMode(
 }
 
 /**
+ * Analyze an image and generate a structured prompt
+ * 
+ * @param imageBase64 - Base64-encoded image string
+ * @returns Promise resolving to the structured prompt
+ * @throws ApiError for network failures, timeouts, or API errors
+ */
+export async function analyzeImage(imageBase64: string): Promise<{
+    success: boolean;
+    structured_prompt?: any;
+    error?: string;
+}> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds for image analysis
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/analyze-image`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image_base64: imageBase64 }),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new ApiError(
+                data.error || `HTTP error ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+
+        if (!data.success) {
+            throw new ApiError(
+                data.error || 'Image analysis failed',
+                response.status
+            );
+        }
+
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error instanceof TypeError) {
+            throw new ApiError(
+                'Network error. Please check your internet connection and try again.',
+                undefined,
+                error
+            );
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new ApiError(
+                'Request timed out. Image analysis is taking longer than expected. Please try again.',
+                408,
+                error
+            );
+        }
+
+        throw new ApiError(
+            'An unexpected error occurred. Please try again.',
+            undefined,
+            error
+        );
+    }
+}
+
+/**
  * Check if the API server is reachable
  * Useful for health checks or connection testing
  * 

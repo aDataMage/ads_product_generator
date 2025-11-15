@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { ImageAnalyzer } from "./pro-mode/ImageAnalyzer";
 import { generateProMode, ApiError } from "@/lib/api";
 import type { StructuredPrompt, ObjectDefinition } from "@/lib/types";
 import { getModeById } from "@/constants/photographyModes";
+import { saveProModeState, loadProModeState } from "@/lib/storage";
 import "../styles/pro-mode-accessibility.css";
 
 /**
@@ -56,37 +57,53 @@ interface ValidationErrors {
  * - 1.5: Generate images using structured prompts
  */
 export function ProModeForm() {
+    // Load saved state from localStorage on mount
+    const savedState = loadProModeState();
+
     // Requirement 1.4: State management for structured prompt
-    const [structuredPrompt, setStructuredPrompt] = useState<StructuredPrompt>({
-        short_description: "",
-        background_setting: "",
-        style_medium: "",
-        artistic_style: "",
-        context: "",
-        lighting: {
-            conditions: "",
-            direction: "",
-            shadows: "",
-        },
-        aesthetics: {
-            composition: "",
-            color_scheme: "",
-            mood_atmosphere: "",
-        },
-        photographic_characteristics: {
-            camera_angle: "",
-            lens_focal_length: "",
-            depth_of_field: "",
-            focus: "",
-        },
-        objects: [],
-    });
+    const [structuredPrompt, setStructuredPrompt] = useState<StructuredPrompt>(
+        savedState?.structuredPrompt || {
+            short_description: "",
+            background_setting: "",
+            style_medium: "",
+            artistic_style: "",
+            context: "",
+            lighting: {
+                conditions: "",
+                direction: "",
+                shadows: "",
+            },
+            aesthetics: {
+                composition: "",
+                color_scheme: "",
+                mood_atmosphere: "",
+            },
+            photographic_characteristics: {
+                camera_angle: "",
+                lens_focal_length: "",
+                depth_of_field: "",
+                focus: "",
+            },
+            objects: [],
+        }
+    );
 
     // Photography mode state
-    const [photographyMode, setPhotographyMode] = useState<string | null>(null);
+    const [photographyMode, setPhotographyMode] = useState<string | null>(
+        savedState?.photographyMode || null
+    );
 
     // Wizard navigation state
-    const [currentStep, setCurrentStep] = useState(0);
+    const [currentStep, setCurrentStep] = useState(savedState?.currentStep || 0);
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        saveProModeState({
+            structuredPrompt,
+            photographyMode,
+            currentStep,
+        });
+    }, [structuredPrompt, photographyMode, currentStep]);
 
     // Generation state
     const [isLoading, setIsLoading] = useState(false);

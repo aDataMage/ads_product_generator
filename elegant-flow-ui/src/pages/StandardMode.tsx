@@ -8,10 +8,11 @@
  * - Refine image functionality
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { generateImage, ApiError } from '../lib/api';
 import { getAnimationDuration } from '../lib/utils';
+import { saveStandardModeState, loadStandardModeState } from '../lib/storage';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent } from '../components/ui/card';
@@ -24,7 +25,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from '../components/ui/dialog';
+} from '@/components/ui/dialog';
 import { Loader2, Sparkles, RefreshCw, Download, Upload, X, Palette } from 'lucide-react';
 import { STYLE_PRESETS } from '../constants/presets';
 
@@ -40,16 +41,30 @@ interface StandardModeState {
 }
 
 export function StandardMode() {
-    const [state, setState] = useState<StandardModeState>({
-        userPrompt: '',
-        selectedPreset: null,
-        referenceImage: null,
-        isLoading: false,
-        generatedImageUrl: null,
-        error: null,
-        isRefining: false,
-        isPresetDialogOpen: false,
+    const [state, setState] = useState<StandardModeState>(() => {
+        // Load saved state from localStorage on mount
+        const saved = loadStandardModeState();
+        return {
+            userPrompt: saved?.userPrompt || '',
+            selectedPreset: saved?.presetName || null,
+            referenceImage: saved?.referenceImagePreview || null,
+            isLoading: false,
+            generatedImageUrl: null,
+            error: null,
+            isRefining: false,
+            isPresetDialogOpen: false,
+        };
     });
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        saveStandardModeState({
+            userPrompt: state.userPrompt,
+            presetName: state.selectedPreset,
+            referenceImageBase64: state.referenceImage ? state.referenceImage.split(',')[1] : null,
+            referenceImagePreview: state.referenceImage,
+        });
+    }, [state.userPrompt, state.selectedPreset, state.referenceImage]);
 
     const handlePromptChange = (value: string) => {
         setState(prev => ({ ...prev, userPrompt: value }));
@@ -264,7 +279,7 @@ export function StandardMode() {
                         <Label className="text-base font-medium">
                             Style Preset
                         </Label>
-                        <Dialog open={state.isPresetDialogOpen} onOpenChange={(open) => setState(prev => ({ ...prev, isPresetDialogOpen: open }))}>
+                        <Dialog open={state.isPresetDialogOpen} onOpenChange={(open: boolean) => setState(prev => ({ ...prev, isPresetDialogOpen: open }))}>
                             <DialogTrigger asChild>
                                 <Button
                                     variant="outline"

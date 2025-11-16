@@ -19,6 +19,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
     Eraser,
     Palette,
     Focus,
@@ -68,136 +74,166 @@ export function EditingToolbar({
     const isEnhanceToolSelected = selectedTool === 'enhance' || selectedTool === 'upscale';
 
     return (
-        <div
-            className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border"
-            role="toolbar"
-            aria-label="Image editing tools"
-        >
-            {/* Background Dropdown */}
-            <DropdownMenu open={backgroundMenuOpen} onOpenChange={setBackgroundMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                        variant={isBackgroundToolSelected ? "default" : "outline"}
-                        size="sm"
-                        disabled={disabled}
-                        className="gap-2"
-                        aria-label="Background editing tools"
-                        aria-haspopup="menu"
-                        aria-expanded={backgroundMenuOpen}
-                    >
-                        <Palette className="h-4 w-4" aria-hidden="true" />
-                        Background
-                        <ChevronDown className="h-3 w-3" aria-hidden="true" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" role="menu">
-                    <DropdownMenuItem
-                        onClick={() => {
-                            onToolSelect('background-remove');
-                            setBackgroundMenuOpen(false);
-                        }}
-                        role="menuitem"
-                        className="gap-2 cursor-pointer"
-                    >
-                        <Eraser className="h-4 w-4" aria-hidden="true" />
-                        Remove Background
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={() => {
-                            onToolSelect('background-replace');
-                            setBackgroundMenuOpen(false);
-                        }}
-                        role="menuitem"
-                        className="gap-2 cursor-pointer"
-                    >
-                        <Palette className="h-4 w-4" aria-hidden="true" />
-                        Replace Background
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={() => {
-                            onToolSelect('background-blur');
-                            setBackgroundMenuOpen(false);
-                        }}
-                        role="menuitem"
-                        className="gap-2 cursor-pointer"
-                    >
-                        <Focus className="h-4 w-4" aria-hidden="true" />
-                        Blur Background
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Generative Fill Button */}
-            <Button
-                variant={selectedTool === 'generative-fill' ? "default" : "outline"}
-                size="sm"
-                disabled={disabled}
-                onClick={() => onToolSelect('generative-fill')}
-                className="gap-2"
-                aria-label="Generative fill tool"
-                aria-pressed={selectedTool === 'generative-fill'}
+        <TooltipProvider>
+            <div
+                className="flex flex-wrap items-center gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg border border-border transition-smooth"
+                role="toolbar"
+                aria-label="Image editing tools"
             >
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Generative Fill
-            </Button>
+                {/* Background Dropdown */}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DropdownMenu open={backgroundMenuOpen} onOpenChange={setBackgroundMenuOpen}>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant={isBackgroundToolSelected ? "default" : "outline"}
+                                    size="sm"
+                                    disabled={disabled}
+                                    className="gap-2 transition-smooth"
+                                    aria-label="Background editing tools"
+                                    aria-haspopup="menu"
+                                    aria-expanded={backgroundMenuOpen}
+                                >
+                                    <Palette className="h-4 w-4" aria-hidden="true" />
+                                    Background
+                                    <ChevronDown className="h-3 w-3" aria-hidden="true" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" role="menu">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        onToolSelect('background-remove');
+                                        setBackgroundMenuOpen(false);
+                                    }}
+                                    role="menuitem"
+                                    className="gap-2 cursor-pointer"
+                                >
+                                    <Eraser className="h-4 w-4" aria-hidden="true" />
+                                    Remove Background
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        onToolSelect('background-replace');
+                                        setBackgroundMenuOpen(false);
+                                    }}
+                                    role="menuitem"
+                                    className="gap-2 cursor-pointer"
+                                >
+                                    <Palette className="h-4 w-4" aria-hidden="true" />
+                                    Replace Background
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        onToolSelect('background-blur');
+                                        setBackgroundMenuOpen(false);
+                                    }}
+                                    role="menuitem"
+                                    className="gap-2 cursor-pointer"
+                                >
+                                    <Focus className="h-4 w-4" aria-hidden="true" />
+                                    Blur Background
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Remove, replace, or blur image backgrounds</p>
+                    </TooltipContent>
+                </Tooltip>
 
-            {/* Enhance Dropdown */}
-            <DropdownMenu open={enhanceMenuOpen} onOpenChange={setEnhanceMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                        variant={isEnhanceToolSelected ? "default" : "outline"}
-                        size="sm"
-                        disabled={disabled}
-                        className="gap-2"
-                        aria-label="Enhancement tools"
-                        aria-haspopup="menu"
-                        aria-expanded={enhanceMenuOpen}
-                    >
-                        <Wand2 className="h-4 w-4" aria-hidden="true" />
-                        Enhance
-                        <ChevronDown className="h-3 w-3" aria-hidden="true" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" role="menu">
-                    <DropdownMenuItem
-                        onClick={() => {
-                            onToolSelect('enhance');
-                            setEnhanceMenuOpen(false);
-                        }}
-                        role="menuitem"
-                        className="gap-2 cursor-pointer"
-                    >
-                        <Wand2 className="h-4 w-4" aria-hidden="true" />
-                        Enhance Quality
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={() => {
-                            onToolSelect('upscale');
-                            setEnhanceMenuOpen(false);
-                        }}
-                        role="menuitem"
-                        className="gap-2 cursor-pointer"
-                    >
-                        <Maximize2 className="h-4 w-4" aria-hidden="true" />
-                        Upscale Resolution
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                {/* Generative Fill Button */}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant={selectedTool === 'generative-fill' ? "default" : "outline"}
+                            size="sm"
+                            disabled={disabled}
+                            onClick={() => onToolSelect('generative-fill')}
+                            className="gap-2 transition-smooth"
+                            aria-label="Generative fill tool"
+                            aria-pressed={selectedTool === 'generative-fill'}
+                        >
+                            <Sparkles className="h-4 w-4" aria-hidden="true" />
+                            Generative Fill
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Add or modify content in specific areas using AI</p>
+                    </TooltipContent>
+                </Tooltip>
 
-            {/* Expand Button */}
-            <Button
-                variant={selectedTool === 'expand' ? "default" : "outline"}
-                size="sm"
-                disabled={disabled}
-                onClick={() => onToolSelect('expand')}
-                className="gap-2"
-                aria-label="Canvas expansion tool"
-                aria-pressed={selectedTool === 'expand'}
-            >
-                <Expand className="h-4 w-4" aria-hidden="true" />
-                Expand
-            </Button>
-        </div>
+                {/* Enhance Dropdown */}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DropdownMenu open={enhanceMenuOpen} onOpenChange={setEnhanceMenuOpen}>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant={isEnhanceToolSelected ? "default" : "outline"}
+                                    size="sm"
+                                    disabled={disabled}
+                                    className="gap-2 transition-smooth"
+                                    aria-label="Enhancement tools"
+                                    aria-haspopup="menu"
+                                    aria-expanded={enhanceMenuOpen}
+                                >
+                                    <Wand2 className="h-4 w-4" aria-hidden="true" />
+                                    Enhance
+                                    <ChevronDown className="h-3 w-3" aria-hidden="true" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" role="menu">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        onToolSelect('enhance');
+                                        setEnhanceMenuOpen(false);
+                                    }}
+                                    role="menuitem"
+                                    className="gap-2 cursor-pointer"
+                                >
+                                    <Wand2 className="h-4 w-4" aria-hidden="true" />
+                                    Enhance Quality
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        onToolSelect('upscale');
+                                        setEnhanceMenuOpen(false);
+                                    }}
+                                    role="menuitem"
+                                    className="gap-2 cursor-pointer"
+                                >
+                                    <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                                    Upscale Resolution
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Improve quality or increase resolution</p>
+                    </TooltipContent>
+                </Tooltip>
+
+                {/* Expand Button */}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant={selectedTool === 'expand' ? "default" : "outline"}
+                            size="sm"
+                            disabled={disabled}
+                            onClick={() => onToolSelect('expand')}
+                            className="gap-2 transition-smooth"
+                            aria-label="Canvas expansion tool"
+                            aria-pressed={selectedTool === 'expand'}
+                        >
+                            <Expand className="h-4 w-4" aria-hidden="true" />
+                            Expand
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Expand canvas to different aspect ratios</p>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+        </TooltipProvider>
     );
 }
 

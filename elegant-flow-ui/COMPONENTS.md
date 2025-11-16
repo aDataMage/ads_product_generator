@@ -8,12 +8,19 @@ This document provides detailed API documentation for all components in the Eleg
   - [App](#app)
   - [SetupPanel](#setuppanel)
   - [ResultsPanel](#resultspanel)
+- [Edit Page Components](#edit-page-components)
+  - [EditPage](#editpage)
+  - [EditPageLayout](#editpagelayout)
+  - [EditPageHeader](#editpageheader)
+  - [ToolPanel](#toolpanel)
+  - [ImagePanel](#imagepanel)
 - [Input Components](#input-components)
   - [ProductDescriptionCard](#productdescriptioncard)
   - [StylePresetCard](#stylepresetcard)
   - [ReferenceImageCard](#referenceimagecard)
   - [GenerateButton](#generatebutton)
 - [UI Components](#ui-components)
+- [Custom Hooks](#custom-hooks)
 - [TypeScript Interfaces](#typescript-interfaces)
 
 ## Core Components
@@ -121,6 +128,283 @@ interface ResultsPanelProps {
 - Responsive sizing and spacing
 
 **Requirements:** 2.2, 7.2, 7.3, 7.4, 7.5, 8.1-8.5, 9.1-9.5, 10.2, 13.4
+
+---
+
+## Edit Page Components
+
+### EditPage
+
+The main container component for the dedicated image editing page with split-panel layout.
+
+**Location:** `src/pages/EditPage.tsx`
+
+**Route:** `/edit`
+
+**URL Parameters:**
+
+- `imageUrl` (query param): URL of the image to edit (required)
+
+**Navigation State:**
+
+```typescript
+interface EditPageNavigationState {
+  imageUrl: string;              // Current image URL
+  originalImageUrl?: string;     // Original image for comparison
+  fromRoute?: string;            // Previous route for back navigation
+}
+```
+
+**State:**
+
+```typescript
+interface EditPageState {
+  currentImageUrl: string;       // Currently displayed image
+  originalImageUrl: string;      // Original image for comparison
+  editHistory: EditHistoryItem[]; // Array of edit operations
+  historyIndex: number;          // Current position in history
+  isLoading: boolean;            // Edit operation in progress
+  loadingMessage: string;        // Current operation description
+  zoom: number;                  // Current zoom level (0.25 to 4)
+  panPosition: { x: number; y: number }; // Pan offset for zoomed images
+  showComparison: boolean;       // Whether comparison mode is active
+  hasUnsavedChanges: boolean;    // Whether edits have been made
+}
+```
+
+**Key Methods:**
+
+- `loadImageFromParams()` - Extract and validate image URL from route
+- `handleEditComplete(newImageUrl, operation)` - Add edit to history and update display
+- `handleUndo()` - Navigate back in edit history
+- `handleRedo()` - Navigate forward in edit history
+- `handleReset()` - Reset to original image
+- `handleDownload()` - Download current image with timestamp
+- `handleBack()` - Navigate to previous page with confirmation if unsaved changes
+
+**Features:**
+
+- Split-panel layout with tools on left, image on right
+- Edit history management (undo/redo)
+- Keyboard shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+0, Ctrl+/-)
+- Image zoom and pan controls
+- Loading overlay during operations
+- Error boundary for graceful error handling
+- Session storage persistence
+- Responsive mobile layout
+
+**Keyboard Shortcuts:**
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Z | Undo last edit |
+| Ctrl+Y | Redo next edit |
+| Ctrl+0 | Zoom to fit |
+| Ctrl++ | Zoom in |
+| Ctrl+- | Zoom out |
+| Escape | Close dialogs/Cancel |
+
+**Requirements:** 1.1, 1.2, 1.3, 1.4, 3.5, 4.1, 4.2, 4.3, 4.4, 8.1, 8.2, 8.3, 8.4
+
+---
+
+### EditPageLayout
+
+Responsive split-panel layout component for the edit page.
+
+**Location:** `src/components/EditPageLayout.tsx`
+
+**Props:**
+
+```typescript
+interface EditPageLayoutProps {
+  toolPanel: React.ReactNode;     // Left panel content (editing tools)
+  imagePanel: React.ReactNode;    // Right panel content (image display)
+}
+```
+
+**Layout Structure:**
+
+```
+┌─────────────────────────────────────┐
+│         EditPageHeader              │
+├──────────────┬──────────────────────┤
+│              │                      │
+│  ToolPanel   │    ImagePanel        │
+│   (30-40%)   │     (60-70%)         │
+│              │                      │
+└──────────────┴──────────────────────┘
+```
+
+**Responsive Breakpoints:**
+
+- **Desktop (>1024px):** Side-by-side panels (40% / 60%)
+- **Tablet (768px-1024px):** Side-by-side panels (35% / 65%)
+- **Mobile (<768px):** Stacked layout (tools above, image below)
+
+**Features:**
+
+- CSS Grid-based layout
+- Responsive panel sizing
+- Fixed header with scrollable panels
+- Smooth transitions between breakpoints
+- Touch-friendly on mobile devices
+
+**Requirements:** 2.1, 2.2, 2.3, 5.1, 5.2, 5.3, 5.4
+
+---
+
+### EditPageHeader
+
+Top navigation bar with back button, title, and action buttons.
+
+**Location:** `src/components/EditPageHeader.tsx`
+
+**Props:**
+
+```typescript
+interface EditPageHeaderProps {
+  onBack: () => void;              // Back button handler
+  onDownload: () => void;          // Download button handler
+  hasUnsavedChanges: boolean;      // Whether to show confirmation on back
+  isLoading?: boolean;             // Disable actions during operations
+}
+```
+
+**Layout:**
+
+```
+[← Back] [Image Editor] ........................ [Download]
+```
+
+**Features:**
+
+- Back navigation with unsaved changes confirmation
+- Download button with icon
+- Responsive spacing and sizing
+- Disabled state during loading
+- ARIA labels for accessibility
+- Sticky positioning at top
+
+**Requirements:** 4.1, 4.2, 4.3, 6.1, 6.2
+
+---
+
+### ToolPanel
+
+Scrollable container for all image editing tools organized in accordion sections.
+
+**Location:** `src/components/ToolPanel.tsx`
+
+**Props:**
+
+```typescript
+interface ToolPanelProps {
+  currentImageUrl: string;         // Current image being edited
+  onEditComplete: (newImageUrl: string, operation: string) => void; // Edit completion handler
+  isProcessing: boolean;           // Whether an operation is in progress
+}
+```
+
+**Tool Sections:**
+
+1. **Background Tools**
+   - Remove Background
+   - Replace Background
+   - Blur Background
+
+2. **Generative Fill**
+   - Mask drawing canvas
+   - Prompt input
+   - Generate button
+
+3. **Enhancement**
+   - One-click quality enhancement
+
+4. **Upscale**
+   - 2x / 4x scale options
+
+5. **Canvas Expander**
+   - Aspect ratio presets
+   - Custom dimensions
+
+**Features:**
+
+- Accordion organization for better space management
+- Scrollable container with fixed header
+- Disabled state during processing
+- Lazy loading of tool components
+- Keyboard navigation support
+- ARIA labels and descriptions
+- Visual feedback for active tools
+
+**Requirements:** 2.1, 2.2, 2.3, 2.4, 2.5
+
+---
+
+### ImagePanel
+
+Image display area with zoom, pan, and comparison capabilities.
+
+**Location:** `src/components/ImagePanel.tsx`
+
+**Props:**
+
+```typescript
+interface ImagePanelProps {
+  imageUrl: string;                // Current image URL
+  originalImageUrl: string;        // Original image for comparison
+  canUndo: boolean;                // Whether undo is available
+  canRedo: boolean;                // Whether redo is available
+  onUndo: () => void;              // Undo handler
+  onRedo: () => void;              // Redo handler
+  onReset: () => void;             // Reset to original handler
+  isLoading: boolean;              // Loading state
+  loadingMessage?: string;         // Operation description
+}
+```
+
+**Features:**
+
+- **Zoom Controls:**
+  - Fit to viewport
+  - 100%, 200% presets
+  - Zoom in/out buttons
+  - Custom zoom levels (0.25x to 4x)
+
+- **Pan/Drag:**
+  - Mouse drag when zoomed
+  - Touch drag on mobile
+  - Smooth momentum scrolling
+
+- **Image Comparison:**
+  - Side-by-side slider view
+  - Original vs edited comparison
+  - Synchronized zoom and pan
+
+- **Toolbar:**
+  - Undo/Redo buttons with keyboard shortcuts
+  - Reset button
+  - Compare toggle
+  - Zoom controls
+
+- **Loading Overlay:**
+  - Spinner with operation name
+  - Progress indication
+  - Disabled interactions during loading
+
+- **Image Metadata:**
+  - Dimensions display
+  - File size (if available)
+  - Zoom percentage
+
+**Zoom Levels:**
+
+```typescript
+const zoomLevels = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+```
+
+**Requirements:** 3.1, 3.2, 3.3, 3.4, 3.5, 7.1, 7.2, 7.3, 7.4
 
 ---
 
@@ -446,6 +730,63 @@ interface AppState extends FormState {
 
 ---
 
+### EditHistoryItem
+
+Individual edit operation in the history.
+
+```typescript
+interface EditHistoryItem {
+  imageUrl: string;              // URL of the image after this edit
+  operation: EditOperation;      // Type of edit operation
+  timestamp: number;             // Unix timestamp of the edit
+  metadata?: {                   // Optional metadata
+    operationParams?: any;       // Parameters used for the operation
+    fileSize?: number;           // File size in bytes
+    dimensions?: {               // Image dimensions
+      width: number;
+      height: number;
+    };
+  };
+}
+
+type EditOperation = 
+  | 'remove_background'
+  | 'replace_background'
+  | 'blur_background'
+  | 'generative_fill'
+  | 'enhance'
+  | 'upscale'
+  | 'expand_canvas';
+```
+
+**Location:** `src/lib/types.ts`
+
+**Requirements:** 3.5, 8.1, 8.2
+
+---
+
+### ZoomLevel
+
+Zoom level configuration for image display.
+
+```typescript
+type ZoomLevel = 0.25 | 0.5 | 0.75 | 1 | 1.5 | 2 | 3 | 4;
+
+interface ZoomState {
+  level: ZoomLevel;              // Current zoom level
+  position: {                    // Pan position
+    x: number;
+    y: number;
+  };
+}
+```
+
+**Location:** `src/lib/types.ts`
+
+**Requirements:** 3.2, 3.3
+
+---
+
 ## API Client
 
 ### generateImage()
@@ -528,6 +869,76 @@ function getAnimationDuration(duration: number): number
 
 ## Custom Hooks
 
+### useEditHistory()
+
+Manages edit history with undo/redo functionality and session storage persistence.
+
+**Location:** `src/hooks/useEditHistory.ts`
+
+**Signature:**
+
+```typescript
+function useEditHistory(initialImageUrl: string): {
+  currentImageUrl: string;
+  canUndo: boolean;
+  canRedo: boolean;
+  history: EditHistoryItem[];
+  historyIndex: number;
+  addEdit: (imageUrl: string, operation: string) => void;
+  undo: () => void;
+  redo: () => void;
+  reset: () => void;
+}
+```
+
+**Parameters:**
+
+- `initialImageUrl`: The original image URL to start with
+
+**Returns:**
+
+- `currentImageUrl`: The current image URL at the history index
+- `canUndo`: Whether undo operation is available
+- `canRedo`: Whether redo operation is available
+- `history`: Array of all edit history items
+- `historyIndex`: Current position in history
+- `addEdit`: Function to add a new edit to history
+- `undo`: Function to move back in history
+- `redo`: Function to move forward in history
+- `reset`: Function to reset to original image
+
+**Features:**
+
+- Maximum 20 history items (configurable)
+- Automatic session storage persistence
+- Clears future history when new edit is added
+- Prevents duplicate consecutive operations
+
+**Usage Example:**
+
+```typescript
+const {
+  currentImageUrl,
+  canUndo,
+  canRedo,
+  addEdit,
+  undo,
+  redo,
+  reset
+} = useEditHistory(originalImageUrl);
+
+// Add an edit
+addEdit(newImageUrl, 'remove_background');
+
+// Undo/redo
+if (canUndo) undo();
+if (canRedo) redo();
+```
+
+**Requirements:** 3.5, 8.1, 8.2
+
+---
+
 ### useFormValidation()
 
 Validates form inputs and returns validation errors.
@@ -553,6 +964,51 @@ function useFormValidation(
 - userPrompt: Minimum 3 characters
 - selectedPreset: Must be selected
 - referenceImage: Valid file type (handled by upload component)
+
+---
+
+### useKeyboardShortcuts()
+
+Manages keyboard shortcuts for the edit page.
+
+**Location:** `src/hooks/useKeyboardShortcuts.ts`
+
+**Signature:**
+
+```typescript
+function useKeyboardShortcuts(handlers: {
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onZoomFit?: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onEscape?: () => void;
+  onSave?: () => void;
+}): void
+```
+
+**Parameters:**
+
+- `handlers`: Object with optional handler functions for each shortcut
+
+**Supported Shortcuts:**
+
+- `Ctrl+Z`: Undo
+- `Ctrl+Y` / `Ctrl+Shift+Z`: Redo
+- `Ctrl+0`: Zoom to fit
+- `Ctrl++` / `Ctrl+=`: Zoom in
+- `Ctrl+-`: Zoom out
+- `Escape`: Close dialogs/Cancel
+- `Ctrl+S`: Save/Download
+
+**Features:**
+
+- Prevents default browser behavior
+- Works across Windows/Mac (Cmd on Mac)
+- Disabled when typing in input fields
+- ARIA announcements for screen readers
+
+**Requirements:** 8.1, 8.2, 8.3, 8.4
 
 ---
 

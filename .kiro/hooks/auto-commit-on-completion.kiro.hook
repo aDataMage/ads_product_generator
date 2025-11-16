@@ -4,13 +4,7 @@
   "description": "Monitors task files for completion status. When the last required task in a spec's task file is marked as done, automatically generates a detailed commit message, commits the changes, and pushes to remote then syncs.",
   "version": "1",
   "when": {
-    "type": "fileEdited",
-    "patterns": [
-      "**/.kiro/**/tasks.md",
-      "**/.kiro/**/tasks.txt",
-      "**/tasks.md",
-      "**/tasks.txt"
-    ]
+    "type": "userTriggered"
   },
   "then": {
     "type": "askAgent",

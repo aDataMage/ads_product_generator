@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Edit Navigation</title>
+</head>
+
+<body>
+    <h1>Testing Edit Button Navigation</h1>
+    <p>Open the browser console and check:</p>
+    <ol>
+        <li>Generate an image in the app</li>
+        <li>Click the "Edit Image" button</li>
+        <li>Check console for logs: "Edit button clicked", "Image URL:", etc.</li>
+        <li>Check if URL changes to /edit</li>
+        <li>Check Network tab for any errors</li>
+    </ol>
+
+    <h2>Debugging Steps:</h2>
+    <pre>
+1. Open browser DevTools (F12)
+2. Go to Console tab
+3. Generate an image
+4. Click "Edit Image" button
+5. Look for console.log messages
+6. Check if navigate() is being called
+7. Check if there are any JavaScript errors
+    </pre>
+
+    <h2>Common Issues:</h2>
+    <ul>
+        <li>Button might be disabled</li>
+        <li>Parent element might have pointer-events: none</li>
+        <li>navigate() might not be imported correctly</li>
+        <li>BrowserRouter might not be wrapping the component</li>
+        <li>Button might be covered by another element (z-index issue)</li>
+    </ul>
+</body>
+
+</html>

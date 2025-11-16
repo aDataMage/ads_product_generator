@@ -57,8 +57,8 @@
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark mode theme */
-@media (prefers-color-scheme: dark) {
+/* Dark mode theme - Task 6.3: Class-based dark mode support */
+.dark {
   @theme {
     --color-background: oklch(9% 0.024 285.82);
     --color-foreground: oklch(98% 0.008 285.82);
@@ -79,6 +79,33 @@
     --color-border: oklch(17.5% 0.053 285.82);
     --color-input: oklch(17.5% 0.053 285.82);
     --color-ring: oklch(83.9% 0.044 285.82);
+  }
+}
+
+/* Fallback for system preference when no class is set */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    @theme {
+      --color-background: oklch(9% 0.024 285.82);
+      --color-foreground: oklch(98% 0.008 285.82);
+      --color-card: oklch(9% 0.024 285.82);
+      --color-card-foreground: oklch(98% 0.008 285.82);
+      --color-popover: oklch(9% 0.024 285.82);
+      --color-popover-foreground: oklch(98% 0.008 285.82);
+      --color-primary: oklch(98% 0.008 285.82);
+      --color-primary-foreground: oklch(11.2% 0.024 285.82);
+      --color-secondary: oklch(17.5% 0.053 285.82);
+      --color-secondary-foreground: oklch(98% 0.008 285.82);
+      --color-muted: oklch(17.5% 0.053 285.82);
+      --color-muted-foreground: oklch(65.1% 0.033 285.82);
+      --color-accent: oklch(17.5% 0.053 285.82);
+      --color-accent-foreground: oklch(98% 0.008 285.82);
+      --color-destructive: oklch(30.6% 0.132 29.23);
+      --color-destructive-foreground: oklch(98% 0.008 285.82);
+      --color-border: oklch(17.5% 0.053 285.82);
+      --color-input: oklch(17.5% 0.053 285.82);
+      --color-ring: oklch(83.9% 0.044 285.82);
+    }
   }
 }
 
@@ -365,6 +392,69 @@ p {
   transition-duration: var(--duration-normal);
 }
 
+/* Task 6.3: Smooth transitions for editing interface states */
+.transition-smooth {
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.transition-smooth-fast {
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.transition-smooth-slow {
+  transition: all var(--duration-slow) var(--ease-out);
+}
+
+/* Smooth height transitions for accordions and collapsible content */
+.transition-height {
+  transition: height var(--duration-normal) var(--ease-in-out),
+    opacity var(--duration-normal) var(--ease-in-out);
+}
+
+/* Smooth scale transitions for interactive elements */
+.transition-scale {
+  transition: transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.transition-scale:hover {
+  transform: scale(1.02);
+}
+
+.transition-scale:active {
+  transform: scale(0.98);
+}
+
+/* Smooth border transitions for focus states */
+.transition-border {
+  transition: border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+/* Smooth background transitions for state changes */
+.transition-bg {
+  transition: background-color var(--duration-normal) var(--ease-in-out),
+    border-color var(--duration-normal) var(--ease-in-out);
+}
+
+/* Fade in/out transitions for content */
+.fade-in {
+  animation: fadeIn var(--duration-normal) var(--ease-out) forwards;
+}
+
+.fade-out {
+  animation: fadeOut var(--duration-normal) var(--ease-in) forwards;
+}
+
+/* Slide transitions for panels and modals */
+.slide-in-up {
+  animation: slideUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+.slide-in-down {
+  animation: slideDown var(--duration-slow) var(--ease-out) forwards;
+}
+
 /* Requirement 13.5: Enhanced focus indicators for accessibility */
 *:focus-visible {
   outline: 2px solid var(--color-ring);
@@ -464,8 +554,17 @@ img {
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
+/* Task 6.3: Dark mode checkered background */
+.dark .bg-checkered {
+  background-image:
+    linear-gradient(45deg, #333 25%, transparent 25%),
+    linear-gradient(-45deg, #333 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #333 75%),
+    linear-gradient(-45deg, transparent 75%, #333 75%);
+}
+
 @media (prefers-color-scheme: dark) {
-  .bg-checkered {
+  :root:not(.light):not(.dark) .bg-checkered {
     background-image:
       linear-gradient(45deg, #333 25%, transparent 25%),
       linear-gradient(-45deg, #333 25%, transparent 25%),
@@ -490,3 +589,6 @@ img {
     scroll-behavior: auto;
   }
 }
+
+/* Import EditPageLayout styles */
+@import "./styles/edit-page-layout.css";

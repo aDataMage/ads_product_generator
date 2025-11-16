@@ -1,40 +1,32 @@
 {
-    "mcpServers": {
-        "product-shot-agent": {
-            "command": "C:/Users/PC/Downloads/ads_product_generator/.venv/Scripts/python.exe",
-            "args": [
-                "mcp_server.py"
-            ],
-            "cwd": "C:/Users/PC/Downloads/ads_product_generator",
-            "env": {
-                "GOOGLE_API_KEY": "your_gemini_api_key_here"
-            },
-            "tools": {
-                "generate_styled_image": {
-                    "description": "Runs the 2-call (Gemini -> Bria) chain to generate a new, styled image.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "user_prompt": {
-                                "type": "string",
-                                "description": "The user's simple text prompt (e.g., 'a smartphone')."
-                            },
-                            "preset_name": {
-                                "type": "string",
-                                "description": "The filename of the preset to use (e.g., 'preset_bright_clean.json')."
-                            },
-                            "reference_image_path": {
-                                "type": "string",
-                                "description": "(Optional) The file path to a reference image."
-                            }
-                        },
-                        "required": [
-                            "user_prompt",
-                            "preset_name"
-                        ]
-                    }
-                }
-            }
-        }
+  "mcpServers": {
+    "product-shot-agent": {
+      "command": "C:/Users/PC/Downloads/ads_product_generator/.venv/Scripts/python.exe",
+      "args": [
+        "mcp_server.py"
+      ],
+      "env": {
+        "GOOGLE_API_KEY": "your_gemini_api_key_here"
+      },
+      "cwd": "C:/Users/PC/Downloads/ads_product_generator",
+      "disabled": false
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "browser_navigate",
+        "browser_take_screenshot",
+        "browser_type",
+        "browser_click",
+        "browser_resize",
+        "browser_snapshot",
+        "browser_fill_form",
+        "browser_evaluate"
+      ]
     }
+  }
 }

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Edit } from "lucide-react";
 import { SceneStyleSection } from "./pro-mode/SceneStyleSection";
 import { LightingSection } from "./pro-mode/LightingSection";
 import { AestheticsSection } from "./pro-mode/AestheticsSection";
@@ -13,6 +15,8 @@ import { generateProMode, ApiError } from "@/lib/api";
 import type { StructuredPrompt, ObjectDefinition } from "@/lib/types";
 import { getModeById } from "@/constants/photographyModes";
 import { saveProModeState, loadProModeState } from "@/lib/storage";
+import { useImageEditor } from "@/hooks/useImageEditor";
+import { useToast } from "@/hooks/useToast";
 import "../styles/pro-mode-accessibility.css";
 
 /**
@@ -112,6 +116,24 @@ export function ProModeForm() {
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
     const [lastPayload, setLastPayload] = useState<any>(null);
     const [retryCount, setRetryCount] = useState(0);
+
+
+
+    // Image editor hook for history tracking
+    const {
+        setOriginalImage,
+        resetToOriginal,
+    } = useImageEditor();
+
+    // Toast hook for notifications
+    const { toast } = useToast();
+
+    // Initialize original image when generatedImageUrl changes
+    useEffect(() => {
+        if (generatedImageUrl) {
+            setOriginalImage(generatedImageUrl);
+        }
+    }, [generatedImageUrl, setOriginalImage]);
 
     // Handler for image analysis completion
     const handleImageAnalysis = (analyzedPrompt: StructuredPrompt) => {
@@ -377,6 +399,35 @@ export function ProModeForm() {
         }
     };
 
+    // Navigation
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // Navigate to dedicated edit page
+    const handleNavigateToEdit = () => {
+        if (!generatedImageUrl) {
+            toast({
+                title: 'No image to edit',
+                description: 'Please generate an image first.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        console.log('=== NAVIGATING TO EDIT PAGE FROM PRO MODE ===');
+        console.log('Image URL:', generatedImageUrl);
+
+        navigate('/edit', {
+            state: {
+                imageUrl: generatedImageUrl,
+                originalImageUrl: generatedImageUrl,
+                fromRoute: location.pathname,
+            }
+        });
+    };
+
+
+
     // Requirement 8.4: Retry functionality
     const handleRetry = async () => {
         if (!lastPayload) return;
@@ -548,17 +599,18 @@ export function ProModeForm() {
                                 <h2 className="text-xl font-semibold text-center">
                                     Your Generated Image
                                 </h2>
-                                <div className="border rounded-lg overflow-hidden bg-muted">
+                                <div className="border rounded-lg overflow-hidden bg-muted relative">
                                     <img
-                                        src={generatedImageUrl}
+                                        src={generatedImageUrl || ''}
                                         alt="Generated product image based on your structured prompt"
                                         className="w-full h-auto"
                                     />
                                 </div>
+
                                 <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                                     <Button
                                         variant="outline"
-                                        onClick={() => window.open(generatedImageUrl, "_blank")}
+                                        onClick={() => generatedImageUrl && window.open(generatedImageUrl, "_blank")}
                                         aria-label="Open generated image in new tab"
                                         className="min-h-[44px]"
                                     >
@@ -566,10 +618,20 @@ export function ProModeForm() {
                                     </Button>
                                     <Button
                                         variant="outline"
+                                        onClick={handleNavigateToEdit}
+                                        aria-label="Edit generated image"
+                                        className="min-h-[44px] gap-2"
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                        Edit Image
+                                    </Button>
+                                    <Button
+                                        variant="outline"
                                         onClick={() => {
                                             setGeneratedImageUrl(null);
                                             setError(null);
                                             setCurrentStep(0);
+                                            resetToOriginal();
                                         }}
                                         aria-label="Clear result and generate another image"
                                         className="min-h-[44px]"
@@ -577,6 +639,8 @@ export function ProModeForm() {
                                         Generate Another
                                     </Button>
                                 </div>
+
+
                             </div>
                         )}
 

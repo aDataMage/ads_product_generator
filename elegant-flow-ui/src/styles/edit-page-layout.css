@@ -1,0 +1,154 @@
+/**
+ * EditPageLayout Styles
+ * 
+ * Responsive breakpoints and panel styling
+ * Requirements: 2.1, 2.2, 2.3, 5.1, 5.2
+ */
+
+/* Desktop layout (>1024px) - Default */
+/* Requirement 2.1: Side-by-side panels (40% / 60%) */
+.edit-page-layout {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    height: calc(100vh - 64px);
+    gap: 0;
+}
+
+/* Requirement 2.3: Resizable divider styling */
+.edit-page-layout .divider {
+    width: 1px;
+    cursor: col-resize;
+    position: relative;
+    transition: background-color 200ms ease;
+}
+
+.edit-page-layout .divider:hover::before,
+.edit-page-layout .divider:focus::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    top: 0;
+    bottom: 0;
+    background: transparent;
+}
+
+/* Tool Panel styling */
+/* Requirement 2.2: Tool panel remains fixed during scrolling */
+.edit-page-layout .tool-panel {
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Custom scrollbar for tool panel */
+.edit-page-layout .tool-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.edit-page-layout .tool-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.edit-page-layout .tool-panel::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+}
+
+.edit-page-layout .tool-panel::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* Image Panel styling */
+.edit-page-layout .image-panel {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Hide scrollbars in image panel */
+.edit-page-layout .image-panel::-webkit-scrollbar {
+    display: none;
+}
+
+.edit-page-layout .image-panel {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* Prevent resize handles */
+.edit-page-layout .image-panel * {
+    resize: none;
+}
+
+/* Tablet layout (768px-1024px) */
+/* Requirement 5.2: Adjust panel widths proportionally on tablet devices */
+@media (max-width: 1024px) and (min-width: 768px) {
+    .edit-page-layout {
+        grid-template-columns: 35% 65%;
+    }
+}
+
+/* Mobile layout (<=520px) - Now using tabs */
+/* Requirement 5.1: Tab-based layout on mobile */
+@media (max-width: 520px) {
+
+    /* Desktop layout is hidden on mobile */
+    .edit-page-layout {
+        display: none !important;
+    }
+
+    /* Show mobile tabs */
+    .mobile-tabs-layout {
+        display: flex !important;
+    }
+}
+
+/* Tablet/Small Desktop layout (521px-768px) - Keep split layout */
+@media (min-width: 521px) and (max-width: 768px) {
+    .edit-page-layout {
+        grid-template-columns: 35% 65%;
+    }
+}
+
+/* Desktop and above (>520px) - Hide mobile tabs */
+@media (min-width: 521px) {
+    .mobile-tabs-layout {
+        display: none !important;
+    }
+
+    .edit-page-layout {
+        display: grid !important;
+    }
+}
+
+/* Accessibility: Focus styles for divider */
+.edit-page-layout .divider:focus {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+}
+
+/* Accessibility: Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .edit-page-layout .divider {
+        transition: none;
+    }
+}
+
+/* Dark mode adjustments */
+.dark .edit-page-layout .tool-panel {
+    background: hsl(var(--muted) / 0.3);
+}
+
+.dark .edit-page-layout .image-panel {
+    background: hsl(var(--background));
+}
+
+.dark .edit-page-layout .divider {
+    background: hsl(var(--border));
+}
+
+.dark .edit-page-layout .divider:hover {
+    background: hsl(var(--primary) / 0.2);
+}

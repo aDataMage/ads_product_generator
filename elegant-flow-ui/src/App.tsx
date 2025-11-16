@@ -14,9 +14,13 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import { motion } from 'framer-motion';
 import { StandardMode } from './pages/StandardMode';
 import { ProMode } from './pages/ProMode';
+import { EditPage } from './pages/EditPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { getAnimationDuration } from './lib/utils';
 import { Sparkles, Sliders } from 'lucide-react';
 import { Button } from './components/ui/button';
+import { Toaster } from './components/ui/toaster';
+import { ThemeToggle } from './components/ThemeToggle';
 
 /**
  * AppContent component
@@ -26,6 +30,7 @@ import { Button } from './components/ui/button';
 function AppContent() {
   const location = useLocation();
   const isProMode = location.pathname === '/pro-mode';
+  const isEditPage = location.pathname === '/edit';
 
   return (
     <>
@@ -34,58 +39,73 @@ function AppContent() {
         Skip to main content
       </a>
       <div className="min-h-screen bg-background text-foreground">
-        {/* Main container with padding */}
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10 max-w-7xl">
-          {/* Header with navigation */}
-          <motion.header
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: getAnimationDuration(0.4), ease: 'easeOut' }}
-            className="mb-6 sm:mb-8 lg:mb-10"
-          >
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-              {/* Title */}
-              <div className="text-center sm:text-left">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-                  Elegant Flow UI
-                </h1>
-                <p className="text-sm sm:text-base text-muted-foreground">
-                  Generate professional product images with AI
-                </p>
+        {/* Conditionally render header - hide on edit page */}
+        {!isEditPage && (
+          <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10 max-w-7xl">
+            {/* Header with navigation */}
+            <motion.header
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: getAnimationDuration(0.4), ease: 'easeOut' }}
+              className="mb-6 sm:mb-8 lg:mb-10"
+            >
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+                {/* Title */}
+                <div className="text-center sm:text-left">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+                    Elegant Flow UI
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    Generate professional product images with AI
+                  </p>
+                </div>
+
+                {/* Navigation and Theme Toggle - Requirement 14.2: Add Pro Mode navigation, Task 6.3: Add dark mode support */}
+                <div className="flex items-center gap-2">
+                  <nav aria-label="Mode selection" className="flex gap-2">
+                    <Button
+                      asChild
+                      variant={!isProMode ? 'default' : 'outline'}
+                      size="default"
+                      className="gap-2"
+                    >
+                      <Link to="/" aria-current={!isProMode ? 'page' : undefined}>
+                        <Sparkles className="h-4 w-4" aria-hidden="true" />
+                        <span>Standard Mode</span>
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant={isProMode ? 'default' : 'outline'}
+                      size="default"
+                      className="gap-2"
+                    >
+                      <Link to="/pro-mode" aria-current={isProMode ? 'page' : undefined}>
+                        <Sliders className="h-4 w-4" aria-hidden="true" />
+                        <span>Pro Mode</span>
+                      </Link>
+                    </Button>
+                  </nav>
+                  <ThemeToggle />
+                </div>
               </div>
+            </motion.header>
+          </div>
+        )}
 
-              {/* Navigation - Requirement 14.2: Add Pro Mode navigation */}
-              <nav aria-label="Mode selection" className="flex gap-2">
-                <Button
-                  asChild
-                  variant={!isProMode ? 'default' : 'outline'}
-                  size="default"
-                  className="gap-2"
-                >
-                  <Link to="/" aria-current={!isProMode ? 'page' : undefined}>
-                    <Sparkles className="h-4 w-4" aria-hidden="true" />
-                    <span>Standard Mode</span>
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant={isProMode ? 'default' : 'outline'}
-                  size="default"
-                  className="gap-2"
-                >
-                  <Link to="/pro-mode" aria-current={isProMode ? 'page' : undefined}>
-                    <Sliders className="h-4 w-4" aria-hidden="true" />
-                    <span>Pro Mode</span>
-                  </Link>
-                </Button>
-              </nav>
-            </div>
-          </motion.header>
-
-          {/* Routes - Requirement 14.1: Add route configuration */}
+        {/* Routes - Requirement 14.1: Add route configuration */}
+        <div className={!isEditPage ? "container mx-auto px-4 sm:px-6 max-w-7xl" : ""}>
           <Routes>
             <Route path="/" element={<StandardMode />} />
             <Route path="/pro-mode" element={<ProMode />} />
+            <Route
+              path="/edit"
+              element={
+                <ErrorBoundary>
+                  <EditPage />
+                </ErrorBoundary>
+              }
+            />
           </Routes>
         </div>
       </div>
@@ -102,6 +122,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppContent />
+      <Toaster />
     </BrowserRouter>
   );
 }

@@ -285,3 +285,30 @@ export interface ExpandImageResponse {
     result_url?: string;
     error?: string;
 }
+
+/**
+ * Edit History Types
+ * Requirements: Task 6.2 - Editing State Management
+ */
+
+/**
+ * Edit operation type
+ */
+export type EditOperationType =
+    | 'remove-bg'
+    | 'replace-bg'
+    | 'blur-bg'
+    | 'gen-fill'
+    | 'expand'
+    | 'enhance'
+    | 'upscale';
+
+/**
+ * Edit operation interface
+ */
+export interface EditOperation {
+    type: EditOperationType;
+    params: Record<string, any>;
+    resultUrl: string;
+    timestamp: number;
+}

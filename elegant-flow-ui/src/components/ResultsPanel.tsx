@@ -7,17 +7,22 @@
  */
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Download, AlertCircle, Edit, X } from "lucide-react";
+import { Loader2, Download, AlertCircle, Edit, X, Undo2, Redo2, RotateCcw, Eye } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getAnimationDuration } from "@/lib/utils";
-import { EditingToolbar, type EditingTool } from "./EditingToolbar";
 import { BackgroundEditor } from "./BackgroundEditor";
 import { GenerativeFillEditor } from "./GenerativeFillEditor";
 import { EnhancementEditor } from "./EnhancementEditor";
 import { CanvasExpander } from "./CanvasExpander";
+import { useImageEditor, type EditOperation, type EditOperationType } from "@/hooks/useImageEditor";
+import { useToast } from "@/hooks/useToast";
+import { useKeyboardShortcuts, getShortcutText } from "@/hooks/useKeyboardShortcuts";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface ResultsPanelProps {
     /** Whether image generation is in progress */
@@ -152,13 +157,40 @@ function ResultsPanel({
  * Displays the generated image with download functionality and editing tools
  * Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 13.3
  * Task 6.1: Integrate all editor components
+ * Task 6.2: Editing State Management with history tracking
  */
 function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage?: () => void }) {
+    const navigate = useNavigate();
+    const location = useLocation();
     const downloadButtonRef = useRef<HTMLButtonElement>(null);
     const [isEditingMode, setIsEditingMode] = useState(false);
-    const [selectedTool, setSelectedTool] = useState<EditingTool>(null);
-    const [currentImageUrl, setCurrentImageUrl] = useState(imageUrl);
+    const [selectedTool, setSelectedTool] = useState<string>("");
     const [editError, setEditError] = useState<string | null>(null);
+    const [showingOriginal, setShowingOriginal] = useState(false);
+
+    // Task 6.2: Use image editor hook for history tracking
+    const {
+        originalImageUrl,
+        currentImageUrl,
+        editHistory,
+        canUndo,
+        canRedo,
+        setOriginalImage,
+        addEdit,
+        undo,
+        redo,
+        resetToOriginal,
+    } = useImageEditor();
+
+    // Task 6.3: Use toast hook for notifications
+    const { toast } = useToast();
+
+    // Initialize original image when imageUrl changes
+    useEffect(() => {
+        if (imageUrl && imageUrl !== originalImageUrl) {
+            setOriginalImage(imageUrl);
+        }
+    }, [imageUrl, originalImageUrl, setOriginalImage]);
 
     // Requirement 13.3: Implement focus management (focus download button on load)
     useEffect(() => {
@@ -167,11 +199,6 @@ function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage
         }
     }, [isEditingMode]);
 
-    // Update current image when original changes
-    useEffect(() => {
-        setCurrentImageUrl(imageUrl);
-    }, [imageUrl]);
-
     // Requirement 8.4: Implement download functionality with timestamped filename
     const handleDownload = () => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
@@ -179,12 +206,40 @@ function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage
 
         // Create a temporary anchor element to trigger download
         const link = document.createElement('a');
-        link.href = currentImageUrl;
+        link.href = currentImageUrl || imageUrl;
         link.download = filename;
         link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        // Show success toast
+        toast({
+            variant: 'success',
+            title: 'Download started',
+            description: editHistory.length > 0 ? 'Downloading edited image' : 'Downloading generated image',
+        });
+    };
+
+    // Download original image
+    const handleDownloadOriginal = () => {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `original-image-${timestamp}.jpg`;
+
+        const link = document.createElement('a');
+        link.href = originalImageUrl || imageUrl;
+        link.download = filename;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Show success toast
+        toast({
+            variant: 'success',
+            title: 'Download started',
+            description: 'Downloading original image',
+        });
     };
 
     // Handle entering edit mode
@@ -199,27 +254,116 @@ function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage
     // Handle exiting edit mode
     const handleExitEditMode = () => {
         setIsEditingMode(false);
-        setSelectedTool(null);
+        setSelectedTool("");
         setEditError(null);
     };
 
     // Handle tool selection
-    const handleToolSelect = (tool: EditingTool) => {
+    const handleToolSelect = (tool: string) => {
         setSelectedTool(tool);
         setEditError(null);
     };
 
-    // Handle edit completion
-    const handleEditComplete = (editedImageUrl: string) => {
-        setCurrentImageUrl(editedImageUrl);
+    // Handle edit completion - add to history
+    const handleEditComplete = (editedImageUrl: string, operationType: EditOperationType, params: Record<string, any> = {}) => {
+        const operation: EditOperation = {
+            type: operationType,
+            params,
+            resultUrl: editedImageUrl,
+            timestamp: Date.now(),
+        };
+
+        addEdit(operation);
         setEditError(null);
+
+        // Show success toast
+        const operationNames: Record<EditOperationType, string> = {
+            'remove-bg': 'Background removed',
+            'replace-bg': 'Background replaced',
+            'blur-bg': 'Background blurred',
+            'gen-fill': 'Generative fill applied',
+            'expand': 'Canvas expanded',
+            'enhance': 'Image enhanced',
+            'upscale': 'Image upscaled',
+        };
+
+        toast({
+            variant: 'success',
+            title: 'Edit successful',
+            description: operationNames[operationType] || 'Edit applied successfully',
+        });
+
         // Keep editing mode active so user can continue editing
     };
 
     // Handle edit error
     const handleEditError = (error: string) => {
         setEditError(error);
+
+        // Show error toast
+        toast({
+            variant: 'destructive',
+            title: 'Edit failed',
+            description: error,
+        });
     };
+
+    // Handle undo
+    const handleUndo = () => {
+        undo();
+        setEditError(null);
+
+        toast({
+            variant: 'default',
+            title: 'Edit undone',
+            description: 'Previous edit has been undone',
+        });
+    };
+
+    // Handle redo
+    const handleRedo = () => {
+        redo();
+        setEditError(null);
+
+        toast({
+            variant: 'default',
+            title: 'Edit redone',
+            description: 'Edit has been reapplied',
+        });
+    };
+
+    // Handle reset to original
+    const handleResetToOriginal = () => {
+        resetToOriginal();
+        setEditError(null);
+
+        toast({
+            variant: 'default',
+            title: 'Reset to original',
+            description: 'All edits have been removed',
+        });
+    };
+
+    // Handle toggle between original and current image
+    const handleToggleOriginal = () => {
+        setShowingOriginal(!showingOriginal);
+    };
+
+    // Determine which image URL to display
+    const displayImageUrl = showingOriginal ? (originalImageUrl || imageUrl) : (currentImageUrl || imageUrl);
+
+    // Check if there are edits to show toggle
+    const hasEdits = editHistory.length > 0;
+
+    // Task 6.3: Setup keyboard shortcuts for editing operations
+    useKeyboardShortcuts({
+        enabled: isEditingMode,
+        onUndo: canUndo ? handleUndo : undefined,
+        onRedo: canRedo ? handleRedo : undefined,
+        onReset: editHistory.length > 0 ? handleResetToOriginal : undefined,
+        onDownload: handleDownload,
+        onEscape: isEditingMode ? handleExitEditMode : undefined,
+    });
 
     return (
         // Requirement 8.2: Add Framer Motion fade-in and scale animation
@@ -239,20 +383,52 @@ function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage
                     {/* Requirement 8.5: Add ARIA labels for image */}
                     {/* Requirement 12.3: Maintain usability on screens as small as 375px wide */}
                     <div className="w-full max-w-2xl">
-                        {/* Requirement 15.2: Optimize image loading with lazy attribute */}
-                        <img
-                            src={currentImageUrl}
-                            alt="Generated product image"
-                            className="w-full h-auto rounded-lg shadow-lg"
-                            loading="lazy"
-                        />
+                        <div className="relative">
+                            {/* Requirement 15.2: Optimize image loading with lazy attribute */}
+                            <img
+                                src={displayImageUrl}
+                                alt={showingOriginal ? "Original product image" : "Generated product image"}
+                                className="w-full h-auto rounded-lg shadow-lg"
+                                loading="lazy"
+                            />
+
+                            {/* Task 6.1: Toggle button to show original vs current */}
+                            {hasEdits && (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handleToggleOriginal}
+                                    className="absolute top-4 right-4 gap-2 shadow-lg transition-smooth"
+                                    aria-label={showingOriginal ? "Show edited image" : "Show original image"}
+                                    aria-pressed={showingOriginal}
+                                >
+                                    <Eye className="h-4 w-4" />
+                                    {showingOriginal ? "Show Edited" : "Show Original"}
+                                </Button>
+                            )}
+                        </div>
+
                         {/* Requirement 13.4: ARIA live region for success announcement */}
                         <div className="sr-only" aria-live="polite" aria-atomic="true" role="status">
                             Image generation complete. Your generated image is now displayed.
                         </div>
+
+                        {/* Show edit history indicator and current view */}
+                        {isEditingMode && hasEdits && (
+                            <div className="mt-2 text-xs text-muted-foreground text-center space-y-1">
+                                <div>
+                                    {editHistory.length} edit{editHistory.length !== 1 ? 's' : ''} applied
+                                </div>
+                                {showingOriginal && (
+                                    <div className="text-amber-600 dark:text-amber-400 font-medium">
+                                        Viewing original image
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Editing Toolbar - Task 6.1 */}
+                    {/* Editing Toolbar - Task 6.1, 6.2 */}
                     {isEditingMode && (
                         <div className="w-full max-w-2xl space-y-4">
                             <div className="flex items-center justify-between">
@@ -266,11 +442,68 @@ function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage
                                     <X className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <EditingToolbar
-                                onToolSelect={handleToolSelect}
-                                selectedTool={selectedTool}
-                                disabled={false}
-                            />
+
+                            {/* Task 6.2: Undo/Redo Controls with Task 6.3: Keyboard Shortcuts */}
+                            <TooltipProvider>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleUndo}
+                                                disabled={!canUndo}
+                                                aria-label={`Undo last edit (${getShortcutText('undo')})`}
+                                                className="gap-2"
+                                            >
+                                                <Undo2 className="h-4 w-4" />
+                                                Undo
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Undo last edit ({getShortcutText('undo')})</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleRedo}
+                                                disabled={!canRedo}
+                                                aria-label={`Redo last undone edit (${getShortcutText('redo')})`}
+                                                className="gap-2"
+                                            >
+                                                <Redo2 className="h-4 w-4" />
+                                                Redo
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Redo last undone edit ({getShortcutText('redo')})</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleResetToOriginal}
+                                                disabled={editHistory.length === 0}
+                                                aria-label={`Reset to original image (${getShortcutText('reset')})`}
+                                                className="gap-2"
+                                            >
+                                                <RotateCcw className="h-4 w-4" />
+                                                Reset to Original
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Reset to original image ({getShortcutText('reset')})</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </div>
+                            </TooltipProvider>
 
                             {/* Error Display */}
                             {editError && (
@@ -281,77 +514,204 @@ function SuccessState({ imageUrl, onEditImage }: { imageUrl: string; onEditImage
                                 </Alert>
                             )}
 
-                            {/* Editor Components - Task 6.1 */}
-                            {selectedTool && (
-                                <div className="w-full">
-                                    {(selectedTool === 'background-remove' ||
-                                        selectedTool === 'background-replace' ||
-                                        selectedTool === 'background-blur') && (
-                                            <BackgroundEditor
-                                                imageUrl={currentImageUrl}
-                                                onEditComplete={handleEditComplete}
-                                                onError={handleEditError}
-                                            />
-                                        )}
+                            {/* Accordion Navigation for Editing Tools */}
+                            <Accordion
+                                type="single"
+                                collapsible
+                                className="w-full transition-smooth"
+                                value={selectedTool}
+                                onValueChange={handleToolSelect}
+                            >
+                                {/* Background Editing Section */}
+                                <AccordionItem value="background" className="border rounded-lg px-4 mb-2 transition-smooth">
+                                    <AccordionTrigger
+                                        className="hover:no-underline transition-smooth"
+                                        aria-label="Background editing tools"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base font-semibold">Background Editing</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                Remove, Replace, or Blur
+                                            </span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <BackgroundEditor
+                                            imageUrl={currentImageUrl || imageUrl}
+                                            onEditComplete={(url, type, params) => handleEditComplete(url, type, params)}
+                                            onError={handleEditError}
+                                        />
+                                    </AccordionContent>
+                                </AccordionItem>
 
-                                    {selectedTool === 'generative-fill' && (
+                                {/* Generative Fill Section */}
+                                <AccordionItem value="generative-fill" className="border rounded-lg px-4 mb-2 transition-smooth">
+                                    <AccordionTrigger
+                                        className="hover:no-underline transition-smooth"
+                                        aria-label="Generative fill tool"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base font-semibold">Generative Fill</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                Add or modify content with AI
+                                            </span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
                                         <GenerativeFillEditor
-                                            imageUrl={currentImageUrl}
-                                            onResult={handleEditComplete}
+                                            imageUrl={currentImageUrl || imageUrl}
+                                            onResult={(url) => handleEditComplete(url, 'gen-fill', {})}
                                             className="w-full"
                                         />
-                                    )}
+                                    </AccordionContent>
+                                </AccordionItem>
 
-                                    {(selectedTool === 'enhance' || selectedTool === 'upscale') && (
+                                {/* Enhancement Section */}
+                                <AccordionItem value="enhance" className="border rounded-lg px-4 mb-2 transition-smooth">
+                                    <AccordionTrigger
+                                        className="hover:no-underline transition-smooth"
+                                        aria-label="Image enhancement tools"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base font-semibold">Enhancement</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                Improve quality and resolution
+                                            </span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
                                         <EnhancementEditor
-                                            imageUrl={currentImageUrl}
-                                            onEditComplete={handleEditComplete}
+                                            imageUrl={currentImageUrl || imageUrl}
+                                            onEditComplete={(url, type, params) => handleEditComplete(url, type, params)}
                                             onError={handleEditError}
                                         />
-                                    )}
+                                    </AccordionContent>
+                                </AccordionItem>
 
-                                    {selectedTool === 'expand' && (
+                                {/* Canvas Expansion Section */}
+                                <AccordionItem value="expand" className="border rounded-lg px-4 mb-2 transition-smooth">
+                                    <AccordionTrigger
+                                        className="hover:no-underline transition-smooth"
+                                        aria-label="Canvas expansion tool"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base font-semibold">Canvas Expansion</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                Change aspect ratio and expand canvas
+                                            </span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
                                         <CanvasExpander
-                                            imageUrl={currentImageUrl}
-                                            onEditComplete={handleEditComplete}
+                                            imageUrl={currentImageUrl || imageUrl}
+                                            onEditComplete={(url, params) => handleEditComplete(url, 'expand', params)}
                                             onError={handleEditError}
                                         />
-                                    )}
-                                </div>
-                            )}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                         </div>
                     )}
 
                     {/* Action buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                        {/* Edit Image button */}
-                        {!isEditingMode && (
-                            <Button
-                                onClick={handleEnterEditMode}
-                                size="lg"
-                                variant="outline"
-                                className="gap-2 w-full sm:w-auto"
-                                aria-label="Edit generated image"
-                            >
-                                <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
-                                Edit Image
-                            </Button>
-                        )}
+                    <TooltipProvider>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            {/* Edit Image button - Navigate to dedicated edit page */}
+                            {/* Requirement 1.1: Display Edit button to navigate to /edit route */}
+                            {!isEditingMode && (
+                                <Button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
 
-                        {/* Requirement 8.3: Add download button with shadcn/ui Button */}
-                        {/* Requirement 8.5: Add ARIA labels for button */}
-                        {/* Requirement 12.5: Adjust button size for mobile */}
-                        <Button
-                            ref={downloadButtonRef}
-                            onClick={handleDownload}
-                            size="lg"
-                            className="gap-2 w-full sm:w-auto"
-                            aria-label="Download generated image"
-                        >
-                            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-                            Download Image
-                        </Button>
-                    </div>
+                                        const imageToEdit = currentImageUrl || imageUrl;
+                                        const originalImage = originalImageUrl || imageUrl;
+
+                                        console.log('=== EDIT BUTTON CLICKED ===');
+                                        console.log('Image URL:', imageToEdit);
+                                        console.log('Original URL:', originalImage);
+                                        console.log('From route:', location.pathname);
+                                        console.log('Navigate function:', typeof navigate);
+
+                                        // Show alert for debugging
+                                        alert(`Edit button clicked! Navigating to /edit with image: ${imageToEdit}`);
+
+                                        // Requirement 1.2, 1.3: Navigate to /edit with image URL state
+                                        navigate('/edit', {
+                                            state: {
+                                                imageUrl: imageToEdit,
+                                                originalImageUrl: originalImage,
+                                                fromRoute: location.pathname,
+                                            }
+                                        });
+
+                                        console.log('Navigate called successfully');
+                                    }}
+                                    size="lg"
+                                    className="gap-2 w-full sm:w-auto transition-smooth"
+                                    aria-label="Edit image in dedicated editor"
+                                >
+                                    <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    Edit Image
+                                </Button>
+                            )}
+
+                            {/* Task 6.2: Download buttons for original and edited versions */}
+                            {editHistory.length > 0 ? (
+                                <>
+                                    <Button
+                                        onClick={handleDownloadOriginal}
+                                        size="lg"
+                                        variant="outline"
+                                        className="gap-2 w-full sm:w-auto"
+                                        aria-label="Download original image"
+                                    >
+                                        <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        Download Original
+                                    </Button>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                ref={downloadButtonRef}
+                                                onClick={handleDownload}
+                                                size="lg"
+                                                className="gap-2 w-full sm:w-auto"
+                                                aria-label={`Download edited image (${getShortcutText('download')})`}
+                                            >
+                                                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                Download Edited
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Download edited image ({getShortcutText('download')})</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </>
+                            ) : (
+                                /* Requirement 8.3: Add download button with shadcn/ui Button */
+                                /* Requirement 8.5: Add ARIA labels for button */
+                                /* Requirement 12.5: Adjust button size for mobile */
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            ref={downloadButtonRef}
+                                            onClick={handleDownload}
+                                            size="lg"
+                                            className="gap-2 w-full sm:w-auto"
+                                            aria-label={`Download generated image (${getShortcutText('download')})`}
+                                        >
+                                            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                            Download Image
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Download image ({getShortcutText('download')})</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                        </div>
+                    </TooltipProvider>
                 </CardContent>
             </Card>
         </motion.div>

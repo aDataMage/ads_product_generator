@@ -332,7 +332,7 @@ export const MaskDrawingCanvas: React.FC<MaskDrawingCanvasProps> = ({
     return (
         <div className={`flex flex-col gap-4 ${className}`}>
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center gap-4 p-4 bg-muted rounded-lg">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-muted rounded-lg">
                 {/* Tool Selection */}
                 <div className="flex gap-2">
                     <Button
@@ -356,8 +356,8 @@ export const MaskDrawingCanvas: React.FC<MaskDrawingCanvasProps> = ({
                 </div>
 
                 {/* Brush Size */}
-                <div className="flex items-center gap-2">
-                    <label htmlFor="brush-size" className="text-sm font-medium">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <label htmlFor="brush-size" className="text-xs sm:text-sm font-medium">
                         Size:
                     </label>
                     <input
@@ -367,10 +367,10 @@ export const MaskDrawingCanvas: React.FC<MaskDrawingCanvasProps> = ({
                         max="100"
                         value={brushSize}
                         onChange={(e) => setBrushSize(Number(e.target.value))}
-                        className="w-32"
+                        className="flex-1 sm:w-32"
                         aria-label="Brush size"
                     />
-                    <span className="text-sm text-muted-foreground w-8">{brushSize}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground w-8">{brushSize}</span>
                 </div>
 
                 {/* History Controls */}

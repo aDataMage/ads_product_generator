@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { generateImage, ApiError } from '../lib/api';
 import { getAnimationDuration } from '../lib/utils';
@@ -17,7 +18,7 @@ import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { Label } from '../components/ui/label';
+import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
@@ -26,8 +27,10 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Loader2, Sparkles, RefreshCw, Download, Upload, X, Palette } from 'lucide-react';
+import { Loader2, Sparkles, RefreshCw, Download, Upload, X, Palette, Edit } from 'lucide-react';
 import { STYLE_PRESETS } from '../constants/presets';
+import { useImageEditor } from '../hooks/useImageEditor';
+import { useToast } from '../hooks/useToast';
 
 interface StandardModeState {
     userPrompt: string;
@@ -55,6 +58,21 @@ export function StandardMode() {
             isPresetDialogOpen: false,
         };
     });
+
+    // Image editor hook for history tracking
+    const {
+        setOriginalImage,
+    } = useImageEditor();
+
+    // Toast hook for notifications
+    const { toast } = useToast();
+
+    // Initialize original image when generatedImageUrl changes
+    useEffect(() => {
+        if (state.generatedImageUrl) {
+            setOriginalImage(state.generatedImageUrl);
+        }
+    }, [state.generatedImageUrl, setOriginalImage]);
 
     // Save state to localStorage whenever it changes
     useEffect(() => {
@@ -152,9 +170,59 @@ export function StandardMode() {
     };
 
     const handleDownload = () => {
-        if (!state.generatedImageUrl) return;
-        window.open(state.generatedImageUrl, '_blank');
+        const imageUrl = state.generatedImageUrl;
+        if (!imageUrl) return;
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `generated-image-${timestamp}.jpg`;
+
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = filename;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+            variant: 'success',
+            title: 'Download started',
+            description: 'Downloading generated image',
+        });
     };
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+
+
+    // Navigate to dedicated edit page
+    // Requirement 1.1, 1.2, 1.3: Navigate to /edit with image URL
+    const handleNavigateToEdit = () => {
+        if (!state.generatedImageUrl) {
+            toast({
+                title: 'No image to edit',
+                description: 'Please generate an image first.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        console.log('=== NAVIGATING TO EDIT PAGE ===');
+        console.log('Image URL:', state.generatedImageUrl);
+        console.log('Original URL:', state.generatedImageUrl);
+
+        navigate('/edit', {
+            state: {
+                imageUrl: state.generatedImageUrl,
+                originalImageUrl: state.generatedImageUrl,
+                fromRoute: location.pathname,
+            }
+        });
+    };
+
+
+
 
     const canGenerate = state.userPrompt.length >= 3 && state.selectedPreset && !state.isLoading;
 
@@ -173,13 +241,13 @@ export function StandardMode() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: getAnimationDuration(0.5) }}
-                        className="w-full"
+                        className="w-full space-y-6"
                     >
                         <Card className="overflow-hidden">
                             <CardContent className="p-0">
                                 <div className="relative group">
                                     <img
-                                        src={state.generatedImageUrl}
+                                        src={state.generatedImageUrl || ''}
                                         alt="Generated product image"
                                         className="w-full h-auto"
                                     />
@@ -203,10 +271,21 @@ export function StandardMode() {
                                             <RefreshCw className="h-5 w-5" />
                                             Refine
                                         </Button>
+                                        <Button
+                                            variant="secondary"
+                                            size="lg"
+                                            onClick={handleNavigateToEdit}
+                                            className="gap-2"
+                                        >
+                                            <Edit className="h-5 w-5" />
+                                            Edit Image
+                                        </Button>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
+
+
                     </motion.div>
                 )}
 

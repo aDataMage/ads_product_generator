@@ -932,17 +932,61 @@ def expand_image(image_url_or_base64: str, target_width: int, target_height: int
         # Build API endpoint
         endpoint = f"{BRIA_EDIT_BASE_URL}/expand"
 
-        # Build payload
+        # Calculate simplified aspect ratio using GCD
+        from math import gcd
+        ratio_gcd = gcd(target_width, target_height)
+        simplified_width = target_width // ratio_gcd
+        simplified_height = target_height // ratio_gcd
+
+        # Map to standard aspect ratios
+        standard_ratios = {
+            (1, 1): "1:1",
+            (4, 3): "4:3",
+            (3, 4): "3:4",
+            (16, 9): "16:9",
+            (9, 16): "9:16",
+            (3, 2): "3:2",
+            (2, 3): "2:3",
+            (21, 9): "21:9",
+            (9, 21): "9:21"
+        }
+
+        # Try to find exact match first
+        aspect_ratio = standard_ratios.get(
+            (simplified_width, simplified_height))
+
+        # If no exact match, find the closest standard aspect ratio
+        if not aspect_ratio:
+            target_ratio = target_width / target_height
+            closest_ratio = None
+            min_diff = float('inf')
+
+            for (w, h), ratio_str in standard_ratios.items():
+                standard_ratio_value = w / h
+                diff = abs(standard_ratio_value - target_ratio)
+                if diff < min_diff:
+                    min_diff = diff
+                    closest_ratio = ratio_str
+
+            aspect_ratio = closest_ratio
+            logger.info(
+                f"No exact match for {target_width}:{target_height}, using closest standard ratio: {aspect_ratio}")
+        else:
+            logger.info(
+                f"Using exact aspect ratio match: {aspect_ratio} for {target_width}:{target_height}")
+
+        # Build payload - use only aspect_ratio (Bria API may not support canvas_size)
         payload = {
             "image": image_url_or_base64,
-            "target_width": target_width,
-            "target_height": target_height
+            "aspect_ratio": aspect_ratio
         }
 
         # Add prompt if provided
         if prompt:
             payload["prompt"] = prompt
             logger.info(f"Using expansion prompt: '{prompt[:50]}...'")
+
+        logger.info(f"Sending payload with aspect_ratio: {aspect_ratio}")
 
         # Submit job to Bria
         logger.info("Submitting expand_image job to Bria API")

@@ -1,0 +1,120 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e6]:
+    - link "Skip to main content" [ref=e7] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Skip to editing tools" [ref=e8] [cursor=pointer]:
+      - /url: "#editing-tools"
+    - banner [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - button "Go back to previous page (Esc)" [ref=e12] [cursor=pointer]:
+            - img
+          - heading "Image Editor" [level=1] [ref=e13]
+        - button "Download edited image (Ctrl+S)" [ref=e15] [cursor=pointer]:
+          - img
+    - region "Image editing workspace" [ref=e16]:
+      - complementary "Editing tools panel" [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - heading "Editing Tools" [level=2] [ref=e20]
+            - paragraph [ref=e21]: Select a tool below to edit your image
+          - region "Editing Tools" [ref=e22]:
+            - generic "Image editing tools" [ref=e24]:
+              - heading "Background Tools Remove, replace, or blur backgrounds" [level=3] [ref=e26]:
+                - button "Background Tools Remove, replace, or blur backgrounds" [ref=e27] [cursor=pointer]:
+                  - generic [ref=e28]:
+                    - img [ref=e30]
+                    - generic [ref=e34]:
+                      - generic [ref=e35]: Background Tools
+                      - generic [ref=e36]: Remove, replace, or blur backgrounds
+                  - img [ref=e37]
+              - heading "Generative Fill Fill masked areas with AI-generated content" [level=3] [ref=e40]:
+                - button "Generative Fill Fill masked areas with AI-generated content" [ref=e41] [cursor=pointer]:
+                  - generic [ref=e42]:
+                    - img [ref=e44]
+                    - generic [ref=e47]:
+                      - generic [ref=e48]: Generative Fill
+                      - generic [ref=e49]: Fill masked areas with AI-generated content
+                  - img [ref=e50]
+              - heading "Enhancement Improve quality and upscale resolution" [level=3] [ref=e53]:
+                - button "Enhancement Improve quality and upscale resolution" [ref=e54] [cursor=pointer]:
+                  - generic [ref=e55]:
+                    - img [ref=e57]
+                    - generic [ref=e60]:
+                      - generic [ref=e61]: Enhancement
+                      - generic [ref=e62]: Improve quality and upscale resolution
+                  - img [ref=e63]
+              - heading "Canvas Expander Expand canvas to different aspect ratios" [level=3] [ref=e66]:
+                - button "Canvas Expander Expand canvas to different aspect ratios" [ref=e67] [cursor=pointer]:
+                  - generic [ref=e68]:
+                    - img [ref=e70]
+                    - generic [ref=e75]:
+                      - generic [ref=e76]: Canvas Expander
+                      - generic [ref=e77]: Expand canvas to different aspect ratios
+                  - img [ref=e78]
+      - separator "Resize panels. Use arrow keys to adjust width." [ref=e80]
+      - main "Image canvas and preview area" [ref=e81]:
+        - region "Image editing canvas" [ref=e82]:
+          - toolbar "Image editing controls" [ref=e83]:
+            - group "History controls" [ref=e84]:
+              - button "Undo last action (Ctrl+Z)" [disabled]:
+                - img
+              - button "Redo last action (Ctrl+Y)" [disabled]:
+                - img
+              - button "Reset to original" [ref=e85] [cursor=pointer]:
+                - img
+            - group "Zoom controls" [ref=e86]:
+              - button "Zoom out (Ctrl+-)" [ref=e87] [cursor=pointer]:
+                - img
+              - button "Current zoom level, click to reset to 100%" [ref=e88] [cursor=pointer]: 100%
+              - button "Zoom in (Ctrl++)" [ref=e89] [cursor=pointer]:
+                - img
+              - button "Zoom to fit (Ctrl+0)" [ref=e90] [cursor=pointer]:
+                - img
+            - group "View options" [ref=e91]:
+              - button "Toggle image information" [ref=e92] [cursor=pointer]:
+                - img
+          - region "Image preview at 100% zoom" [ref=e93]:
+            - img "Image being edited" [ref=e95]
+    - generic [ref=e97]:
+      - tabpanel "Image" [ref=e98]:
+        - region "Image editing canvas" [ref=e100]:
+          - toolbar "Image editing controls" [ref=e101]:
+            - group "History controls" [ref=e102]:
+              - button "Undo last action (Ctrl+Z)" [disabled]:
+                - img
+              - button "Redo last action (Ctrl+Y)" [disabled]:
+                - img
+              - button "Reset to original" [ref=e103] [cursor=pointer]:
+                - img
+            - group "Zoom controls" [ref=e104]:
+              - button "Zoom out (Ctrl+-)" [ref=e105] [cursor=pointer]:
+                - img
+              - button "Current zoom level, click to reset to 100%" [ref=e106] [cursor=pointer]: 100%
+              - button "Zoom in (Ctrl++)" [ref=e107] [cursor=pointer]:
+                - img
+              - button "Zoom to fit (Ctrl+0)" [ref=e108] [cursor=pointer]:
+                - img
+            - group "View options" [ref=e109]:
+              - button "Toggle image information" [ref=e110] [cursor=pointer]:
+                - img
+          - region "Image preview at 100% zoom" [ref=e111]:
+            - img "Image being edited" [ref=e113]
+      - tablist [ref=e114]:
+        - tab "Image" [selected] [ref=e115] [cursor=pointer]:
+          - img [ref=e116]
+          - generic [ref=e120]: Image
+        - tab "Tools" [ref=e121] [cursor=pointer]:
+          - img [ref=e122]
+          - generic [ref=e126]: Tools
+    - status [ref=e127]
+    - button "Open performance monitor" [ref=e128] [cursor=pointer]:
+      - img
+  - region "Notifications (F8)":
+    - list
+```

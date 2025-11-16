@@ -14,6 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Skeleton } from "./ui/skeleton";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "./ui/tooltip";
 import {
     Loader2,
     CheckCircle2,
@@ -41,7 +48,9 @@ interface BackgroundEditorProps {
     /** URL of the image to edit */
     imageUrl: string;
     /** Callback when editing operation completes */
-    onEditComplete: (editedImageUrl: string) => void;
+    onEditComplete: (editedImageUrl: string, operationType: 'remove-bg' | 'replace-bg' | 'blur-bg', params: Record<string, any>) => void;
+    /** Callback when editing operation starts */
+    onEditStart?: (operationType: string) => void;
     /** Callback when editing operation fails */
     onError: (error: string) => void;
 }
@@ -94,6 +103,7 @@ function getIconComponent(iconName?: string): LucideIcon | null {
 export function BackgroundEditor({
     imageUrl,
     onEditComplete,
+    onEditStart,
     onError,
 }: BackgroundEditorProps) {
     const [processingState, setProcessingState] = useState<ProcessingState>({
@@ -151,6 +161,11 @@ export function BackgroundEditor({
         // Clear previous feedback
         setFeedbackState({ type: null, message: '', operation: null });
 
+        // Notify parent that operation is starting
+        if (onEditStart) {
+            onEditStart('remove-bg');
+        }
+
         updateProcessingState({
             isProcessing: true,
             operation: 'remove',
@@ -183,7 +198,7 @@ export function BackgroundEditor({
                     operation: 'remove'
                 });
 
-                setTimeout(() => onEditComplete(resultUrl), 500);
+                setTimeout(() => onEditComplete(resultUrl, 'remove-bg', {}), 500);
             } else {
                 const errorMsg = result.error || "Failed to remove background";
                 setFeedbackState({
@@ -233,6 +248,11 @@ export function BackgroundEditor({
         // Clear previous feedback
         setFeedbackState({ type: null, message: '', operation: null });
 
+        // Notify parent that operation is starting
+        if (onEditStart) {
+            onEditStart('replace-bg');
+        }
+
         updateProcessingState({
             isProcessing: true,
             operation: 'replace',
@@ -267,7 +287,10 @@ export function BackgroundEditor({
                     operation: 'replace'
                 });
 
-                setTimeout(() => onEditComplete(resultUrl), 500);
+                setTimeout(() => onEditComplete(resultUrl, 'replace-bg', {
+                    background_prompt: backgroundPrompt.trim(),
+                    background_color: backgroundColor
+                }), 500);
             } else {
                 const errorMsg = result.error || "Failed to replace background";
                 setFeedbackState({
@@ -306,6 +329,11 @@ export function BackgroundEditor({
         // Clear previous feedback
         setFeedbackState({ type: null, message: '', operation: null });
 
+        // Notify parent that operation is starting
+        if (onEditStart) {
+            onEditStart('blur-bg');
+        }
+
         updateProcessingState({
             isProcessing: true,
             operation: 'blur',
@@ -339,7 +367,9 @@ export function BackgroundEditor({
                     operation: 'blur'
                 });
 
-                setTimeout(() => onEditComplete(resultUrl), 500);
+                setTimeout(() => onEditComplete(resultUrl, 'blur-bg', {
+                    blur_strength: blurStrength
+                }), 500);
             } else {
                 const errorMsg = result.error || "Failed to blur background";
                 setFeedbackState({
@@ -374,326 +404,358 @@ export function BackgroundEditor({
     };
 
     return (
-        <Card className="w-full" role="region" aria-label="Background editing tools">
-            <CardHeader>
-                <CardTitle id="background-editor-title">Background Editor</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6" aria-labelledby="background-editor-title">
-                {/* Image Preview Section */}
-                {previewImageUrl && (
-                    <div className="space-y-2" role="region" aria-label="Image preview">
-                        <h3 className="text-sm font-medium" id="preview-heading">Preview</h3>
-                        <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted">
-                            <img
-                                src={previewImageUrl}
-                                alt={`Edited image preview showing ${processingState.operation ? processingState.operation + ' background operation' : 'background editing result'}`}
-                                className="w-full h-auto"
-                                loading="lazy"
-                                aria-describedby="preview-description"
-                            />
+        <TooltipProvider>
+            <Card className="w-full transition-smooth" role="region" aria-label="Background editing tools">
+                <CardHeader className="px-4 sm:px-6">
+                    <CardTitle id="background-editor-title" className="text-lg sm:text-xl">Background Editor</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 transition-smooth" aria-labelledby="background-editor-title">
+                    {/* Skeleton Loading State - Shows when processing */}
+                    {processingState.isProcessing && !previewImageUrl && (
+                        <div className="space-y-2 fade-in" role="region" aria-label="Loading preview">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="w-full aspect-video rounded-lg" />
+                            <Skeleton className="h-3 w-48 mx-auto" />
                         </div>
-                        <p id="preview-description" className="text-xs text-muted-foreground text-center">
-                            Preview of your edited image
-                        </p>
-                    </div>
-                )}
+                    )}
 
-                {/* Success/Error Feedback - Shows after operation completes */}
-                {feedbackState.type && (
-                    <Alert
-                        variant={feedbackState.type === 'error' ? 'destructive' : 'default'}
-                        className={feedbackState.type === 'success' ? 'border-green-500 bg-green-50 dark:bg-green-950' : ''}
-                        role="alert"
-                        aria-live="polite"
-                    >
-                        {feedbackState.type === 'success' ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        ) : (
-                            <AlertCircle className="h-4 w-4" />
-                        )}
-                        <AlertTitle className={feedbackState.type === 'success' ? 'text-green-800 dark:text-green-200' : ''}>
-                            {feedbackState.type === 'success' ? 'Success' : 'Error'}
-                        </AlertTitle>
-                        <AlertDescription className={feedbackState.type === 'success' ? 'text-green-700 dark:text-green-300' : ''}>
-                            {feedbackState.message}
-                        </AlertDescription>
-                    </Alert>
-                )}
-
-                {/* Progress Indicator - Shows when any operation is processing */}
-                {processingState.isProcessing && (
-                    <div
-                        className="space-y-2 p-4 bg-muted rounded-lg"
-                        role="status"
-                        aria-live="polite"
-                        aria-atomic="true"
-                        aria-label={`Processing ${processingState.operation} operation`}
-                    >
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium" id="progress-status">{processingState.statusMessage}</span>
-                            <span className="text-muted-foreground" aria-label={`${Math.round(processingState.progress)} percent complete`}>
-                                {Math.round(processingState.progress)}%
-                            </span>
-                        </div>
-                        <div className="w-full bg-background rounded-full h-2 overflow-hidden" aria-hidden="true">
-                            <div
-                                className="bg-primary h-full transition-all duration-300 ease-out"
-                                style={{ width: `${processingState.progress}%` }}
-                            />
-                        </div>
-                        <div
-                            role="progressbar"
-                            aria-valuenow={Math.round(processingState.progress)}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-labelledby="progress-status"
-                            className="sr-only"
-                        >
-                            {Math.round(processingState.progress)}% complete
-                        </div>
-                    </div>
-                )}
-
-                {/* Remove Background Section */}
-                <div className="space-y-2" role="group" aria-labelledby="remove-bg-heading">
-                    <h3 className="text-sm font-medium" id="remove-bg-heading">Remove Background</h3>
-                    <Button
-                        onClick={handleRemoveBackground}
-                        disabled={processingState.isProcessing}
-                        className="w-full"
-                        variant="outline"
-                        aria-label="Remove background from image"
-                        aria-describedby="remove-bg-description"
-                        aria-busy={processingState.isProcessing && processingState.operation === 'remove'}
-                    >
-                        {processingState.isProcessing && processingState.operation === 'remove' ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                                Processing...
-                            </>
-                        ) : (
-                            "Remove Background"
-                        )}
-                    </Button>
-                    <p id="remove-bg-description" className="sr-only">
-                        Removes the background from your image, creating a transparent background
-                    </p>
-                </div>
-
-                {/* Replace Background Section */}
-                <div className="space-y-2" role="group" aria-labelledby="replace-bg-heading">
-                    <h3 className="text-sm font-medium" id="replace-bg-heading">Replace Background</h3>
-                    <div className="space-y-3">
-                        {/* Preset Category Tabs */}
-                        <div>
-                            <label className="text-xs text-muted-foreground block mb-2">
-                                Choose a Preset Category
-                            </label>
-                            <div
-                                className="flex gap-1 p-1 bg-muted rounded-lg"
-                                role="tablist"
-                                aria-label="Background preset categories"
-                            >
-                                {BACKGROUND_CATEGORIES.map((category) => (
-                                    <button
-                                        key={category}
-                                        role="tab"
-                                        aria-selected={selectedCategory === category}
-                                        aria-controls={`${category}-presets`}
-                                        id={`${category}-tab`}
-                                        onClick={() => setSelectedCategory(category)}
-                                        disabled={processingState.isProcessing}
-                                        className={`flex-1 px-3 py-2 text-xs font-medium rounded transition-colors ${selectedCategory === category
-                                            ? 'bg-background text-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                    >
-                                        {BACKGROUND_CATEGORY_NAMES[category]}
-                                    </button>
-                                ))}
+                    {/* Image Preview Section */}
+                    {previewImageUrl && (
+                        <div className="space-y-2 fade-in" role="region" aria-label="Image preview">
+                            <h3 className="text-sm font-medium" id="preview-heading">Preview</h3>
+                            <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted transition-smooth">
+                                <img
+                                    src={previewImageUrl}
+                                    alt={`Edited image preview showing ${processingState.operation ? processingState.operation + ' background operation' : 'background editing result'}`}
+                                    className="w-full h-auto transition-opacity"
+                                    loading="lazy"
+                                    aria-describedby="preview-description"
+                                />
                             </div>
-                        </div>
-
-                        {/* Preset Grid */}
-                        <div
-                            role="tabpanel"
-                            id={`${selectedCategory}-presets`}
-                            aria-labelledby={`${selectedCategory}-tab`}
-                            className="space-y-2"
-                        >
-                            <label className="text-xs text-muted-foreground block">
-                                Select a Preset
-                            </label>
-                            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
-                                {getPresetsByCategory(selectedCategory).map((preset) => {
-                                    const IconComponent = getIconComponent(preset.icon);
-
-                                    return (
-                                        <button
-                                            key={preset.id}
-                                            onClick={() => handlePresetSelect(preset)}
-                                            disabled={processingState.isProcessing}
-                                            className={`p-3 text-left rounded-lg border-2 transition-all ${selectedPreset?.id === preset.id
-                                                ? 'border-primary bg-primary/5'
-                                                : 'border-border hover:border-primary/50 bg-background'
-                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                            aria-label={`Select ${preset.name} preset`}
-                                            aria-pressed={selectedPreset?.id === preset.id}
-                                        >
-                                            <div className="space-y-1">
-                                                {/* Visual indicator: color swatch or icon */}
-                                                <div className="flex items-center justify-center w-full h-12 rounded border border-border mb-2">
-                                                    {preset.color ? (
-                                                        <div
-                                                            className="w-full h-full rounded"
-                                                            style={{ backgroundColor: preset.color }}
-                                                            aria-hidden="true"
-                                                        />
-                                                    ) : IconComponent ? (
-                                                        <IconComponent
-                                                            className="w-6 h-6 text-muted-foreground"
-                                                            aria-hidden="true"
-                                                        />
-                                                    ) : null}
-                                                </div>
-                                                <div className="text-xs font-medium">{preset.name}</div>
-                                                <div className="text-xs text-muted-foreground line-clamp-2">
-                                                    {preset.description}
-                                                </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label htmlFor="background-prompt" className="text-xs text-muted-foreground block mb-1">
-                                Custom Background Description {selectedPreset ? '(Override Preset)' : '(Optional)'}
-                            </label>
-                            <Input
-                                id="background-prompt"
-                                type="text"
-                                placeholder={selectedPreset?.prompt || "e.g., white studio background with soft shadows"}
-                                value={backgroundPrompt}
-                                onChange={(e) => {
-                                    setBackgroundPrompt(e.target.value);
-                                }}
-                                disabled={processingState.isProcessing}
-                                aria-label="Enter custom background description"
-                                aria-describedby="background-prompt-help"
-                                aria-invalid={false}
-                            />
-                            <p id="background-prompt-help" className="text-xs text-muted-foreground mt-1">
-                                {selectedPreset
-                                    ? `Editing "${selectedPreset.name}" preset. Modify the prompt to customize it.`
-                                    : 'Describe your own background or select a preset above'}
+                            <p id="preview-description" className="text-xs text-muted-foreground text-center">
+                                Preview of your edited image
                             </p>
                         </div>
+                    )}
 
-                        <div>
-                            <label htmlFor="background-color" className="text-xs text-muted-foreground block mb-1">
-                                Or choose a solid color
-                            </label>
-                            <div className="flex gap-2 items-center">
-                                <Input
-                                    id="background-color"
-                                    type="color"
-                                    value={backgroundColor}
-                                    onChange={(e) => setBackgroundColor(e.target.value)}
-                                    disabled={processingState.isProcessing}
-                                    className="w-20 h-10 cursor-pointer"
-                                    aria-label="Select background color"
-                                    aria-describedby="background-color-value"
-                                />
-                                <span
-                                    id="background-color-value"
-                                    className="text-sm text-muted-foreground"
-                                    aria-live="polite"
-                                >
-                                    {backgroundColor}
+                    {/* Success/Error Feedback - Shows after operation completes */}
+                    {feedbackState.type && (
+                        <Alert
+                            variant={feedbackState.type === 'error' ? 'destructive' : 'default'}
+                            className={`fade-in ${feedbackState.type === 'success' ? 'border-green-500 bg-green-50 dark:bg-green-950' : ''}`}
+                            role="alert"
+                            aria-live="polite"
+                        >
+                            {feedbackState.type === 'success' ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            ) : (
+                                <AlertCircle className="h-4 w-4" />
+                            )}
+                            <AlertTitle className={feedbackState.type === 'success' ? 'text-green-800 dark:text-green-200' : ''}>
+                                {feedbackState.type === 'success' ? 'Success' : 'Error'}
+                            </AlertTitle>
+                            <AlertDescription className={feedbackState.type === 'success' ? 'text-green-700 dark:text-green-300' : ''}>
+                                {feedbackState.message}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {/* Progress Indicator - Shows when any operation is processing */}
+                    {processingState.isProcessing && (
+                        <div
+                            className="space-y-2 p-4 bg-muted rounded-lg fade-in"
+                            role="status"
+                            aria-live="polite"
+                            aria-atomic="true"
+                            aria-label={`Processing ${processingState.operation} operation`}
+                        >
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="font-medium" id="progress-status">{processingState.statusMessage}</span>
+                                <span className="text-muted-foreground" aria-label={`${Math.round(processingState.progress)} percent complete`}>
+                                    {Math.round(processingState.progress)}%
                                 </span>
                             </div>
-                        </div>
-
-                        <Button
-                            onClick={handleReplaceBackground}
-                            disabled={processingState.isProcessing}
-                            className="w-full"
-                            aria-label="Replace background with custom description or color"
-                            aria-describedby="replace-bg-description"
-                            aria-busy={processingState.isProcessing && processingState.operation === 'replace'}
-                        >
-                            {processingState.isProcessing && processingState.operation === 'replace' ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                                    Processing...
-                                </>
-                            ) : (
-                                "Replace Background"
-                            )}
-                        </Button>
-                        <p id="replace-bg-description" className="sr-only">
-                            Replaces the current background with either a custom generated background based on your description or a solid color
-                        </p>
-                    </div>
-                </div>
-
-                {/* Blur Background Section */}
-                <div className="space-y-2" role="group" aria-labelledby="blur-bg-heading">
-                    <h3 className="text-sm font-medium" id="blur-bg-heading">Blur Background</h3>
-                    <div className="space-y-3">
-                        <div>
-                            <label htmlFor="blur-strength" className="text-xs text-muted-foreground block mb-2">
-                                Blur Strength: <span aria-live="polite">{blurStrength}</span>
-                            </label>
-                            <input
-                                id="blur-strength"
-                                type="range"
-                                min="0"
-                                max="100"
-                                step="1"
-                                value={blurStrength}
-                                onChange={(e) => setBlurStrength(Number(e.target.value))}
-                                disabled={processingState.isProcessing}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                                aria-label={`Adjust blur strength, current value ${blurStrength}`}
+                            <div className="w-full bg-background rounded-full h-2 overflow-hidden" aria-hidden="true">
+                                <div
+                                    className="bg-primary h-full transition-all duration-300 ease-out"
+                                    style={{ width: `${processingState.progress}%` }}
+                                />
+                            </div>
+                            <div
+                                role="progressbar"
+                                aria-valuenow={Math.round(processingState.progress)}
                                 aria-valuemin={0}
                                 aria-valuemax={100}
-                                aria-valuenow={blurStrength}
-                                aria-valuetext={`${blurStrength} percent blur strength`}
-                                aria-describedby="blur-strength-help"
-                            />
-                            <p id="blur-strength-help" className="sr-only">
-                                Use arrow keys to adjust blur strength from 0 to 100. Higher values create stronger blur effects.
-                            </p>
+                                aria-labelledby="progress-status"
+                                className="sr-only"
+                            >
+                                {Math.round(processingState.progress)}% complete
+                            </div>
                         </div>
+                    )}
 
-                        <Button
-                            onClick={handleBlurBackground}
-                            disabled={processingState.isProcessing}
-                            className="w-full"
-                            variant="outline"
-                            aria-label={`Apply background blur with strength ${blurStrength}`}
-                            aria-describedby="blur-bg-description"
-                            aria-busy={processingState.isProcessing && processingState.operation === 'blur'}
-                        >
-                            {processingState.isProcessing && processingState.operation === 'blur' ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                                    Processing...
-                                </>
-                            ) : (
-                                "Blur Background"
-                            )}
-                        </Button>
-                        <p id="blur-bg-description" className="sr-only">
-                            Applies a blur effect to the background while keeping the main subject in focus, creating depth of field
+                    {/* Remove Background Section */}
+                    <div className="space-y-2" role="group" aria-labelledby="remove-bg-heading">
+                        <h3 className="text-sm font-medium" id="remove-bg-heading">Remove Background</h3>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    onClick={handleRemoveBackground}
+                                    disabled={processingState.isProcessing}
+                                    className="w-full"
+                                    variant="outline"
+                                    aria-label="Remove background from image"
+                                    aria-describedby="remove-bg-description"
+                                    aria-busy={processingState.isProcessing && processingState.operation === 'remove'}
+                                >
+                                    {processingState.isProcessing && processingState.operation === 'remove' ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        "Remove Background"
+                                    )}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Creates a transparent background for product shots</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        <p id="remove-bg-description" className="sr-only">
+                            Removes the background from your image, creating a transparent background
                         </p>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+
+                    {/* Replace Background Section */}
+                    <div className="space-y-2" role="group" aria-labelledby="replace-bg-heading">
+                        <h3 className="text-sm font-medium" id="replace-bg-heading">Replace Background</h3>
+                        <div className="space-y-3">
+                            {/* Preset Category Tabs */}
+                            <div>
+                                <label className="text-xs text-muted-foreground block mb-2">
+                                    Choose a Preset Category
+                                </label>
+                                <div
+                                    className="flex gap-1 p-1 bg-muted rounded-lg"
+                                    role="tablist"
+                                    aria-label="Background preset categories"
+                                >
+                                    {BACKGROUND_CATEGORIES.map((category) => (
+                                        <button
+                                            key={category}
+                                            role="tab"
+                                            aria-selected={selectedCategory === category}
+                                            aria-controls={`${category}-presets`}
+                                            id={`${category}-tab`}
+                                            onClick={() => setSelectedCategory(category)}
+                                            disabled={processingState.isProcessing}
+                                            className={`flex-1 px-3 py-2 text-xs font-medium rounded transition-colors ${selectedCategory === category
+                                                ? 'bg-background text-foreground shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        >
+                                            {BACKGROUND_CATEGORY_NAMES[category]}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Preset Grid */}
+                            <div
+                                role="tabpanel"
+                                id={`${selectedCategory}-presets`}
+                                aria-labelledby={`${selectedCategory}-tab`}
+                                className="space-y-2"
+                            >
+                                <label className="text-xs text-muted-foreground block">
+                                    Select a Preset
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
+                                    {getPresetsByCategory(selectedCategory).map((preset) => {
+                                        const IconComponent = getIconComponent(preset.icon);
+
+                                        return (
+                                            <button
+                                                key={preset.id}
+                                                onClick={() => handlePresetSelect(preset)}
+                                                disabled={processingState.isProcessing}
+                                                className={`p-3 text-left rounded-lg border-2 transition-smooth transition-scale ${selectedPreset?.id === preset.id
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-border hover:border-primary/50 bg-background'
+                                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                aria-label={`Select ${preset.name} preset`}
+                                                aria-pressed={selectedPreset?.id === preset.id}
+                                            >
+                                                <div className="space-y-1">
+                                                    {/* Visual indicator: color swatch or icon */}
+                                                    <div className="flex items-center justify-center w-full h-12 rounded border border-border mb-2">
+                                                        {preset.color ? (
+                                                            <div
+                                                                className="w-full h-full rounded"
+                                                                style={{ backgroundColor: preset.color }}
+                                                                aria-hidden="true"
+                                                            />
+                                                        ) : IconComponent ? (
+                                                            <IconComponent
+                                                                className="w-6 h-6 text-muted-foreground"
+                                                                aria-hidden="true"
+                                                            />
+                                                        ) : null}
+                                                    </div>
+                                                    <div className="text-xs font-medium">{preset.name}</div>
+                                                    <div className="text-xs text-muted-foreground line-clamp-2">
+                                                        {preset.description}
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label htmlFor="background-prompt" className="text-xs text-muted-foreground block mb-1">
+                                    Custom Background Description {selectedPreset ? '(Override Preset)' : '(Optional)'}
+                                </label>
+                                <Input
+                                    id="background-prompt"
+                                    type="text"
+                                    placeholder={selectedPreset?.prompt || "e.g., white studio background with soft shadows"}
+                                    value={backgroundPrompt}
+                                    onChange={(e) => {
+                                        setBackgroundPrompt(e.target.value);
+                                    }}
+                                    disabled={processingState.isProcessing}
+                                    aria-label="Enter custom background description"
+                                    aria-describedby="background-prompt-help"
+                                    aria-invalid={false}
+                                />
+                                <p id="background-prompt-help" className="text-xs text-muted-foreground mt-1">
+                                    {selectedPreset
+                                        ? `Editing "${selectedPreset.name}" preset. Modify the prompt to customize it.`
+                                        : 'Describe your own background or select a preset above'}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label htmlFor="background-color" className="text-xs text-muted-foreground block mb-1">
+                                    Or choose a solid color
+                                </label>
+                                <div className="flex gap-2 items-center">
+                                    <Input
+                                        id="background-color"
+                                        type="color"
+                                        value={backgroundColor}
+                                        onChange={(e) => setBackgroundColor(e.target.value)}
+                                        disabled={processingState.isProcessing}
+                                        className="w-20 h-10 cursor-pointer"
+                                        aria-label="Select background color"
+                                        aria-describedby="background-color-value"
+                                    />
+                                    <span
+                                        id="background-color-value"
+                                        className="text-sm text-muted-foreground"
+                                        aria-live="polite"
+                                    >
+                                        {backgroundColor}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        onClick={handleReplaceBackground}
+                                        disabled={processingState.isProcessing}
+                                        className="w-full"
+                                        aria-label="Replace background with custom description or color"
+                                        aria-describedby="replace-bg-description"
+                                        aria-busy={processingState.isProcessing && processingState.operation === 'replace'}
+                                    >
+                                        {processingState.isProcessing && processingState.operation === 'replace' ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            "Replace Background"
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Generate a new background from text or use a solid color</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <p id="replace-bg-description" className="sr-only">
+                                Replaces the current background with either a custom generated background based on your description or a solid color
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Blur Background Section */}
+                    <div className="space-y-2" role="group" aria-labelledby="blur-bg-heading">
+                        <h3 className="text-sm font-medium" id="blur-bg-heading">Blur Background</h3>
+                        <div className="space-y-3">
+                            <div>
+                                <label htmlFor="blur-strength" className="text-xs text-muted-foreground block mb-2">
+                                    Blur Strength: <span aria-live="polite">{blurStrength}</span>
+                                </label>
+                                <input
+                                    id="blur-strength"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                    value={blurStrength}
+                                    onChange={(e) => setBlurStrength(Number(e.target.value))}
+                                    disabled={processingState.isProcessing}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                    aria-label={`Adjust blur strength, current value ${blurStrength}`}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={blurStrength}
+                                    aria-valuetext={`${blurStrength} percent blur strength`}
+                                    aria-describedby="blur-strength-help"
+                                />
+                                <p id="blur-strength-help" className="sr-only">
+                                    Use arrow keys to adjust blur strength from 0 to 100. Higher values create stronger blur effects.
+                                </p>
+                            </div>
+
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        onClick={handleBlurBackground}
+                                        disabled={processingState.isProcessing}
+                                        className="w-full"
+                                        variant="outline"
+                                        aria-label={`Apply background blur with strength ${blurStrength}`}
+                                        aria-describedby="blur-bg-description"
+                                        aria-busy={processingState.isProcessing && processingState.operation === 'blur'}
+                                    >
+                                        {processingState.isProcessing && processingState.operation === 'blur' ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            "Blur Background"
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Create depth of field by blurring the background</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <p id="blur-bg-description" className="sr-only">
+                                Applies a blur effect to the background while keeping the main subject in focus, creating depth of field
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </TooltipProvider>
     );
 }
 

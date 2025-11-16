@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Page Manual Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        h2 {
+            color: #666;
+            margin-top: 0;
+        }
+
+        .test-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 10px 10px 0;
+            font-weight: 500;
+        }
+
+        .test-link:hover {
+            background: #0052a3;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist li {
+            padding: 8px;
+            margin: 4px 0;
+            background: #f8f9fa;
+            border-left: 3px solid #0066cc;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 Edit Page Manual Testing</h1>
+    < div class="warning">
+        <strong>⚠️ Prerequisites:</strong>
+        <ul>
+            <li>Dev server must be running: <code>npm run dev</code></li>
+            <li>You need a valid image URL to test with</li>
+            <li>Backend API should be running for editing features</li>
+        </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 Quick Test Links</h2>
+            <p>Click these links to test the edit page with different scenarios:</p>
+
+            <a href="http://localhost:5175/edit?imageUrl=https://via.placeholder.com/800x600" class="test-link">
+                Test with 800x600 Image
+            </a>
+
+            <a href="http://localhost:5175/edit?imageUrl=https://via.placeholder.com/1920x1080" class="test-link">
+                Test with 1920x1080 Image
+            </a>
+
+            <a href="http://localhost:5175/edit?imageUrl=https://via.placeholder.com/600x800" class="test-link">
+                Test with Portrait Image
+            </a>
+
+            <a href="http://localhost:5175/edit?imageUrl=https://via.placeholder.com/2000x500" class="test-link">
+                Test with Wide Image
+            </a>
+
+            <a href="http://localhost:5175/edit" class="test-link">
+                Test Error State (No URL)
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Critical Layout Tests</h2>
+            <ul class="checklist">
+                <li><strong>Header:</strong> Check all buttons are visible and don't overlap</li>
+                <li><strong>Split Panels:</strong> Verify 40/60 split on desktop</li>
+                <li><strong>Tool Panel:</strong> Scroll through all accordion sections</li>
+                <li><strong>Image Panel:</strong> Test zoom in/out and pan functionality</li>
+                <li><strong>Resizable Divider:</strong> Drag to resize panels</li>
+                <li><strong>Mobile View:</strong> Resize to <768px and check stacking</li>
+                <li><strong>Toolbar Overflow:</strong> Resize to 320px width</li>
+                <li><strong>Loading States:</strong> Trigger an edit operation</li>
+                <li><strong>Comparison View:</strong> Toggle compare button</li>
+                <li><strong>Metadata Overlay:</strong> Toggle info button</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📐 Responsive Breakpoints to Test</h2>
+            <ul class="checklist">
+                <li><strong>Desktop (>1024px):</strong> Full split layout, all features visible</li>
+                <li><strong>Tablet (768-1024px):</strong> Adjusted split (35/65)</li>
+                <li><strong>Mobile (480-768px):</strong> Stacked layout</li>
+                <li><strong>Small Mobile (<480px):< /strong> Compact stacked layout</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>⌨️ Keyboard Shortcuts to Test</h2>
+            <ul class="checklist">
+                <li><code>Ctrl+Z</code> - Undo</li>
+                <li><code>Ctrl+Y</code> - Redo</li>
+                <li><code>Ctrl+R</code> - Reset</li>
+                <li><code>Ctrl+S</code> - Download</li>
+                <li><code>Ctrl+0</code> - Zoom fit</li>
+                <li><code>Ctrl++</code> - Zoom in</li>
+                <li><code>Ctrl+-</code> - Zoom out</li>
+                <li><code>Escape</code> - Go back</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🎨 Features to Test in Each Tool</h2>
+
+            <h3>Background Tools</h3>
+            <ul class="checklist">
+                <li>Remove Background button</li>
+                <li>Replace Background with preset selector</li>
+                <li>Blur Background with intensity slider</li>
+            </ul>
+
+            <h3>Generative Fill</h3>
+            <ul class="checklist">
+                <li>Mask drawing canvas</li>
+                <li>Brush size slider</li>
+                <li>Prompt input field</li>
+                <li>Generate button</li>
+                <li>Clear mask button</li>
+            </ul>
+
+            <h3>Enhancement</h3>
+            <ul class="checklist">
+                <li>Enhance quality button</li>
+                <li>Upscale resolution with scale selector</li>
+            </ul>
+
+            <h3>Canvas Expander</h3>
+            <ul class="checklist">
+                <li>Aspect ratio dropdown</li>
+                <li>Custom dimensions inputs</li>
+                <li>Expand button</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🐛 Known Issues to Watch For</h2>
+            <ul class="checklist">
+                <li><strong>Toolbar Overflow:</strong> ImagePanel toolbar may wrap on narrow screens</li>
+                <li><strong>Accordion Overflow:</strong> Tool content may overflow on short screens</li>
+                <li><strong>Comparison Slider:</strong> May be difficult to use on touch devices</li>
+                <li><strong>Metadata Overlay:</strong> May overlap controls on small screens</li>
+                <li><strong>Divider Grabbing:</strong> May be too thin on touch devices</li>
+                <li><strong>Long Messages:</strong> Loading messages may wrap awkwardly</li>
+                <li><strong>Pinch Zoom:</strong> May conflict with browser zoom on mobile</li>
+                <li><strong>Aspect Ratios:</strong> Very wide/tall images may not fit properly</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 How to Report Issues</h2>
+            <p>For each issue found, document:</p>
+            <ul>
+                <li><strong>Component:</strong> Which part broke (e.g., "ImagePanel toolbar")</li>
+                <li><strong>Screen Size:</strong> Width x Height where issue occurs</li>
+                <li><strong>Description:</strong> What's wrong</li>
+                <li><strong>Steps:</strong> How to reproduce</li>
+                <li><strong>Screenshot:</strong> Visual evidence</li>
+                <li><strong>Severity:</strong> Critical / Major / Minor</li>
+            </ul>
+        </div>
+
+        <script>
+            // Add viewport size display
+            function updateViewportSize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                const breakpoint = width > 1024 ? 'Desktop' : width > 768 ? 'Tablet' : width > 480 ? 'Mobile' : 'Small Mobile';
+
+                let display = document.getElementById('viewport-display');
+                if (!display) {
+                    display = document.createElement('div');
+                    display.id = 'viewport-display';
+                    display.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 10px 15px; border-radius: 6px; font-size: 14px; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,0.3);';
+                    document.body.appendChild(display);
+                }
+
+                display.textContent = `${width} × ${height} (${breakpoint})`;
+            }
+
+            updateViewportSize();
+            window.addEventListener('resize', updateViewportSize);
+        </script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+# This directory contains visual documentation for the Image Editing Features Guide
+# 
+# Screenshots and GIFs should be captured according to the instructions in README.md
+# 
+# Required files:
+# - remove-background-tool.png
+# - remove-background-comparison.gif
+# - replace-background-interface.png
+# - replace-background-presets.png
+# - replace-background-results.gif
+# - blur-background-slider.png
+# - blur-background-comparison.gif
+# - generative-fill-interface.png
+# - mask-drawing-tools.gif
+# - generative-fill-process.gif
+# - generative-fill-examples.png
+# - enhance-quality-button.png
+# - enhance-quality-comparison.gif
+# - upscale-resolution-selector.png
+# - upscale-resolution-results.png
+# - upscale-detail-zoom.gif
+# - canvas-expander-interface.png
+# - canvas-expansion-preview.png
+# - canvas-expansion-results.gif
+# - canvas-expansion-examples.png
